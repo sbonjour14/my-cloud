@@ -15,3 +15,20 @@ buildNumber.properties
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Maven (Backend)
+backend/target/
+backend/.mvn/
+
+# Node.js (Frontend)
+frontend/node_modules/
+frontend/dist/
+
+# Docker
+postgres_data/
+*.log
