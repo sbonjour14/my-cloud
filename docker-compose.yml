@@ -9,7 +9,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - ./data/postgres:/var/lib/postgresql
     restart: unless-stopped
 
   backend:
@@ -23,6 +23,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: mycloudpassword
     ports:
       - "8080:8080"
+    volumes:
+      - "./data/uploads:/app/uploads"
     depends_on:
       - db
     restart: unless-stopped
@@ -34,9 +36,9 @@ services:
     container_name: my-cloud-frontend
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
     restart: unless-stopped
-
-volumes:
-  postgres_data:
