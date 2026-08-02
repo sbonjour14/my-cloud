@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.github.sbonjour.my_cloud.entity.User;
 
-public interface UserRepositery extends JpaRepository<User, UUID>{
+public interface UserRepository extends JpaRepository<User, UUID>{
     Optional<User> findByEmail(String email);
 }
