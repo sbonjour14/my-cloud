@@ -21,4 +21,4 @@ jwt:
 
 file:
   storage:
-    path: "/data/uploads"
+    path: "/app/uploads"
