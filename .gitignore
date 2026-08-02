@@ -32,6 +32,6 @@ frontend/dist/
 
 data/
 
-
+*.env*
 
 *.log
