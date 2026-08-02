@@ -1,4 +1,4 @@
-package com.github.sbonjour.my_cloud.repositery;
+package com.github.sbonjour.my_cloud.repository;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,9 +17,7 @@ public interface MediaAssetRepository extends JpaRepository<MediaAsset, UUID> {
 
     List<MediaAsset> findByOwnerOrderByUploadedAtDesc(User owner);
 
-    Optional<MediaAsset> findByFileName(String fileName);
-
-    Optional<MediaAsset> findByFileNameIgnoringCase(String fileName);
+    Optional<MediaAsset> findByOwnerAndFileNameIgnoringCase(User owner, String fileName);
 
     List<MediaAsset> findByStoredFile(StoredFile storedFile);
 }

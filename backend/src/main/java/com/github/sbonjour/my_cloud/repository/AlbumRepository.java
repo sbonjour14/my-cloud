@@ -1,4 +1,4 @@
-package com.github.sbonjour.my_cloud.repositery;
+package com.github.sbonjour.my_cloud.repository;
 
 import java.util.List;
 import java.util.UUID;
