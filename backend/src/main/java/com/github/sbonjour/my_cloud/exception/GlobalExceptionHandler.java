@@ -36,6 +36,16 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNotFound(NotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleConflict(ConflictException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
         Map<String, Object> body = Map.of(
                 "timestamp", Instant.now().toString(),
