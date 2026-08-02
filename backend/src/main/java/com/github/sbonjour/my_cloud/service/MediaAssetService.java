@@ -3,8 +3,10 @@ package com.github.sbonjour.my_cloud.service;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,6 +17,7 @@ import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
 import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
 import com.github.sbonjour.my_cloud.exception.InvalidFileTypeException;
+import com.github.sbonjour.my_cloud.exception.NotFoundException;
 import com.github.sbonjour.my_cloud.repository.MediaAssetRepository;
 import com.github.sbonjour.my_cloud.repository.StoredFileRepository;
 
@@ -60,23 +63,26 @@ public class MediaAssetService {
     }
 
     public MediaAsset uploadFile(MultipartFile file, User owner) {
-
-        // Compute checksum 
         byte[] bytes;
-
         try {
             bytes = file.getBytes();
         } catch (IOException e) {
             throw new InternalServerErrorException("Error while accessing the file");
-
         }
 
         String checksum = calculateChecksum(bytes);
 
-        // check if storedFile already exists
+        if (mediaAssetRepository.findByOwnerAndFileNameIgnoringCase(owner, file.getOriginalFilename()).isPresent()) {
+            throw new ConflictException("A media asset with the same name already exists for this user");
+        }
+
         StoredFile sf = storedFileRepository.findByChecksum(checksum).orElse(null);
-        if(sf == null) {
-            // create file in storage
+
+        if (sf != null && mediaAssetRepository.findByOwnerAndStoredFile(owner, sf).isPresent()) {
+            throw new ConflictException("A media asset with the same file already exists for this user");
+        }
+
+        if (sf == null) {
             String storagePath = uploadPath + "/" + checksum;
             try {
                 file.transferTo(new java.io.File(storagePath));
@@ -84,29 +90,34 @@ public class MediaAssetService {
                 throw new InternalServerErrorException("Error while saving the file");
             }
 
-            // Create new storedFile
-            sf = StoredFile.builder().checksum(checksum).storagePath(storagePath).mimeType(file.getContentType()).sizeBytes(file.getSize()).mediaType(getMediaType(file)).build();
-        } 
-        // Save storedFile
-        sf = storedFileRepository.save(sf);
-
-        // check if mediaAsset already exists for this user and fileName
-        MediaAsset existingMediaAsset = mediaAssetRepository.findByOwnerAndFileNameIgnoringCase(owner, file.getOriginalFilename()).orElse(null);
-        if(existingMediaAsset != null) {
-            throw new ConflictException("A media asset with the same name already exists for this user");
+            sf = StoredFile.builder()
+                    .checksum(checksum)
+                    .storagePath(storagePath)
+                    .mimeType(file.getContentType())
+                    .sizeBytes(file.getSize())
+                    .mediaType(getMediaType(file))
+                    .build();
+            sf = storedFileRepository.save(sf);
         }
 
-        existingMediaAsset = mediaAssetRepository.findByOwnerAndStoredFile(owner, sf).orElse(null);
-        if(existingMediaAsset != null) {
-            throw new ConflictException("A media asset with the same file already exists for this user");
-        }
-
-
-        MediaAsset mediaAsset = MediaAsset.builder().owner(owner).fileName(file.getOriginalFilename()).storedFile(sf).build();
+        MediaAsset mediaAsset = MediaAsset.builder()
+                .owner(owner)
+                .fileName(file.getOriginalFilename())
+                .storedFile(sf)
+                .build();
 
         return mediaAssetRepository.save(mediaAsset);
     }
 
+    public MediaAsset getMediaAsset(UUID id, User user) {
+        MediaAsset mediaAsset = mediaAssetRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Media asset not found"));
 
-    
+        if (!mediaAsset.getOwner().equals(user)) {
+            throw new AccessDeniedException("You don't have access to this media asset");
+        }
+
+        return mediaAsset;
+    }
+
 }

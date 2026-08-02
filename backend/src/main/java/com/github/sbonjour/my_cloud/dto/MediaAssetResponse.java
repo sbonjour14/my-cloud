@@ -17,7 +17,7 @@ public record MediaAssetResponse(
         return new MediaAssetResponse(
             mediaAsset.getId(),
             mediaAsset.getFileName(),
-            "/mediaAssets/" + mediaAsset.getId(),
+            "/media/" + mediaAsset.getId(),
             mediaAsset.getStoredFile().getMediaType(),
             UserResponse.fromEntity(mediaAsset.getOwner()),
             mediaAsset.getUploadedAt()
