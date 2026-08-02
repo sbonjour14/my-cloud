@@ -16,6 +16,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(InternalServerErrorException.class)
+    public ResponseEntity<Map<String, Object>> handleInternalServerError(InternalServerErrorException ex) {
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidCredentials(InvalidCredentialsException ex) {
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
@@ -23,6 +28,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidInputException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidInput(InvalidInputException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidFileTypeException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidFileType(InvalidFileTypeException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
