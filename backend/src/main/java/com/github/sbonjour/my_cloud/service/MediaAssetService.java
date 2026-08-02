@@ -12,6 +12,7 @@ import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
+import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
 import com.github.sbonjour.my_cloud.exception.InvalidFileTypeException;
 import com.github.sbonjour.my_cloud.repository.MediaAssetRepository;
@@ -26,7 +27,7 @@ public class MediaAssetService {
     private final MediaAssetRepository mediaAssetRepository;
     private final StoredFileRepository storedFileRepository;
 
-    @Value("${file.storage.path:/data/uploads}")
+    @Value("${file.storage.path:/app/uploads}")
     private String uploadPath;
 
     private MediaType getMediaType(MultipartFile file) {
@@ -89,7 +90,19 @@ public class MediaAssetService {
         // Save storedFile
         sf = storedFileRepository.save(sf);
 
-        MediaAsset mediaAsset = MediaAsset.builder().owner(owner).fileName(file.getName()).storedFile(sf).build();
+        // check if mediaAsset already exists for this user and fileName
+        MediaAsset existingMediaAsset = mediaAssetRepository.findByOwnerAndFileNameIgnoringCase(owner, file.getOriginalFilename()).orElse(null);
+        if(existingMediaAsset != null) {
+            throw new ConflictException("A media asset with the same name already exists for this user");
+        }
+
+        existingMediaAsset = mediaAssetRepository.findByOwnerAndStoredFile(owner, sf).orElse(null);
+        if(existingMediaAsset != null) {
+            throw new ConflictException("A media asset with the same file already exists for this user");
+        }
+
+
+        MediaAsset mediaAsset = MediaAsset.builder().owner(owner).fileName(file.getOriginalFilename()).storedFile(sf).build();
 
         return mediaAssetRepository.save(mediaAsset);
     }

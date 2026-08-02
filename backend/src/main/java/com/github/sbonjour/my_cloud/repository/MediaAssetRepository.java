@@ -19,5 +19,7 @@ public interface MediaAssetRepository extends JpaRepository<MediaAsset, UUID> {
 
     Optional<MediaAsset> findByOwnerAndFileNameIgnoringCase(User owner, String fileName);
 
+    Optional<MediaAsset> findByOwnerAndStoredFile(User owner, StoredFile storedFile);
+
     List<MediaAsset> findByStoredFile(StoredFile storedFile);
 }

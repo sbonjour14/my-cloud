@@ -1,0 +1,27 @@
+package com.github.sbonjour.my_cloud.dto;
+
+import java.time.Instant;
+import java.util.UUID;
+
+import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
+
+public record MediaAssetResponse(
+    UUID id,
+    String filename,
+    String url,
+    MediaType mediaType,
+    UserResponse owner,
+    Instant createdAt
+) {
+    public static MediaAssetResponse fromEntity(com.github.sbonjour.my_cloud.entity.MediaAsset mediaAsset) {
+        return new MediaAssetResponse(
+            mediaAsset.getId(),
+            mediaAsset.getFileName(),
+            "/mediaAssets/" + mediaAsset.getId(),
+            mediaAsset.getStoredFile().getMediaType(),
+            UserResponse.fromEntity(mediaAsset.getOwner()),
+            mediaAsset.getUploadedAt()
+        );
+    }
+    
+}
