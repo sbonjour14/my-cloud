@@ -10,6 +10,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.github.sbonjour.my_cloud.entity.User;
+import com.github.sbonjour.my_cloud.repository.UserRepository;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
@@ -19,6 +22,7 @@ import java.util.UUID;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -37,8 +41,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (jwtService.isTokenValid(token)) {
             UUID userId = jwtService.extractUserId(token);
 
+            User user = userRepository.findById(userId).orElse(null);
+            
             var authentication = new UsernamePasswordAuthenticationToken(
-                    userId, null, Collections.emptyList());
+                    user, null, Collections.emptyList());
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
