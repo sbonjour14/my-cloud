@@ -12,7 +12,12 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "media_assets")
+@Table(
+    name = "media_assets",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"owner_id", "file_name"})
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
