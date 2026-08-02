@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
+import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
 
 public interface MediaAssetRepository extends JpaRepository<MediaAsset, UUID> {
@@ -17,4 +18,8 @@ public interface MediaAssetRepository extends JpaRepository<MediaAsset, UUID> {
     List<MediaAsset> findByOwnerOrderByUploadedAtDesc(User owner);
 
     Optional<MediaAsset> findByFileName(String fileName);
+
+    Optional<MediaAsset> findByFileNameIgnoringCase(String fileName);
+
+    List<MediaAsset> findByStoredFile(StoredFile storedFile);
 }
