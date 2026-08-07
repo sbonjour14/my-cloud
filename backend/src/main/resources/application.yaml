@@ -22,3 +22,6 @@ jwt:
 file:
   storage:
     path: "/app/uploads"
+logging:
+  level:
+    org.springframework.security: DEBUG
