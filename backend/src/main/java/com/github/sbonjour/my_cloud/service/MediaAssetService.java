@@ -73,11 +73,10 @@ public class MediaAssetService {
             throw new InternalServerErrorException("Error while accessing the file");
         }
 
-        String checksum = calculateChecksum(bytes);
-
         if (mediaAssetRepository.findByOwnerAndFileNameIgnoringCase(owner, file.getOriginalFilename()).isPresent()) {
             throw new ConflictException("A media asset with the same name already exists for this user");
         }
+        String checksum = calculateChecksum(bytes);
 
         StoredFile sf = storedFileRepository.findByChecksum(checksum).orElse(null);
 
