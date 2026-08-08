@@ -18,4 +18,12 @@ public interface StoredFileRepository extends JpaRepository<StoredFile, UUID> {
 
     @Query("SELECT SUM(s.sizeBytes) FROM StoredFile s")
     Long getTotalStorageUsed();
+
+    @Query("""
+            SELECT sf FROM StoredFile sf
+            WHERE NOT EXISTS (
+                SELECT 1 FROM MediaAsset ma WHERE ma.storedFile = sf
+            )
+            """)
+    List<StoredFile> findOrphaned();
 }

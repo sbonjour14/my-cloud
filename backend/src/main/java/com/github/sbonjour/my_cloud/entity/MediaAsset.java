@@ -12,12 +12,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(
-    name = "media_assets",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"owner_id", "file_name"})
-    }
-)
+@Table(name = "media_assets", uniqueConstraints = {
+        @UniqueConstraint(columnNames = { "owner_id", "file_name" })
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,11 +28,11 @@ public class MediaAsset {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
+    @JoinColumn(name = "owner_id", nullable = false, foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE"))
     private User owner;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "stored_file_id", nullable = false)
+    @JoinColumn(name = "stored_file_id", nullable = false, foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (stored_file_id) REFERENCES stored_files(id) ON DELETE CASCADE"))
     private StoredFile storedFile;
 
     @Column(nullable = false)

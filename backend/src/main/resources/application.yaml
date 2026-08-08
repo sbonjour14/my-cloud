@@ -1,20 +1,23 @@
 spring:
   application:
     name: my-cloud
-    
+
   datasource:
     url: jdbc:postgresql://db:5432/mycloud_db
     username: mycloud
     password: mycloudpassword
     driver-class-name: org.postgresql.Driver
-
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+
 jwt:
   secret: ${JWT_SECRET}
   expiration: 604800000
@@ -22,6 +25,7 @@ jwt:
 file:
   storage:
     path: "/app/uploads"
+
 logging:
   level:
     org.springframework.security: DEBUG
