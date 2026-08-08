@@ -11,6 +11,15 @@ import lombok.Setter;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Represents a media asset (photo or video) uploaded by a user.
+ *
+ * Each MediaAsset is associated with a StoredFile that contains the
+ * actual file data, and is owned by a User. The combination of owner
+ * and file name must be unique to prevent duplicate file names for
+ * the same user.
+ */
+
 @Entity
 @Table(name = "media_assets", uniqueConstraints = {
         @UniqueConstraint(columnNames = { "owner_id", "file_name" })

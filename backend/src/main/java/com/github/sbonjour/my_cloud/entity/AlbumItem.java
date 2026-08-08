@@ -11,6 +11,14 @@ import lombok.Setter;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Represents a media item (photo or video) that belongs to an album.
+ *
+ * Each AlbumItem links a MediaAsset to an Album, allowing users to
+ * organize their media into albums. An AlbumItem is unique per
+ * combination of album and media asset.
+ */
+
 @Entity
 @Table(name = "album_items", uniqueConstraints = @UniqueConstraint(columnNames = { "album_id", "media_asset_id" }))
 @Getter

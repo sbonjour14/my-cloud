@@ -3,7 +3,6 @@ package com.github.sbonjour.my_cloud.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -11,6 +10,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.Instant;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+/**
+ * Global exception handler for the application.
+ *
+ * This class handles various exceptions thrown by the application and
+ * returns appropriate HTTP responses with error details. It provides
+ * centralized exception handling for REST controllers.
+ */
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -54,6 +61,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage());
     }
+
+    /**
+     * Handles validation errors for method arguments.
+     *
+     * This method captures MethodArgumentNotValidException, which occurs
+     * when validation on an argument annotated with @Valid fails. It extracts
+     * the field errors and constructs a detailed error message.
+     *
+     * @param ex the MethodArgumentNotValidException thrown during validation
+     * @return a ResponseEntity containing the error details and HTTP status 400
+     */
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {

@@ -11,6 +11,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents a friendship relationship between two users.
+ *
+ * Each Friendship links a requester user to a requested user, and
+ * maintains the status of the friendship (pending, accepted, or rejected).
+ * A Friendship is unique per combination of requester and requested users.
+ */
+
 @Entity
 @Table(name = "friendships", uniqueConstraints = @UniqueConstraint(columnNames = { "requester_id", "requested_id" }))
 @Getter

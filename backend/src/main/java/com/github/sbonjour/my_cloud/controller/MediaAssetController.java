@@ -29,11 +29,33 @@ import lombok.RequiredArgsConstructor;
 public class MediaAssetController {
     private final MediaAssetService mediaAssetService;
 
+    /**
+     * Uploads a media asset for the authenticated user.
+     *
+     * The uploaded file is validated and stored, and a MediaAsset entity
+     * is created to represent it. The response includes the public
+     * representation of the newly created media asset.
+     *
+     * @param file the uploaded file
+     * @param user the authenticated user (injected by Spring Security)
+     * @return 200 OK with the created MediaAssetResponse
+     */
+
     @PostMapping("/mediaAssets")
     public ResponseEntity<MediaAssetResponse> uploadMediaAsset(@RequestParam("file") MultipartFile file, @AuthenticationPrincipal User user) {
         MediaAsset mediaAsset = mediaAssetService.uploadFile(file, user);
         return ResponseEntity.ok(MediaAssetResponse.fromEntity(mediaAsset));
     }
+
+    /**
+     * Retrieves all media assets for the authenticated user.
+     *
+     * The response includes a list of public representations of the
+     * user's media assets.
+     *
+     * @param user the authenticated user (injected by Spring Security)
+     * @return 200 OK with a list of MediaAssetResponse
+     */
 
     @GetMapping("/mediaAssets")
     public ResponseEntity<List<MediaAssetResponse>> getMediaAssets(@AuthenticationPrincipal User user) {
@@ -45,6 +67,16 @@ public class MediaAssetController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves the actual media file for a given media asset ID.
+     *
+     * The file is served with the appropriate MIME type. Access is
+     * restricted to the owner of the media asset.
+     *
+     * @param id   the UUID of the media asset
+     * @param user the authenticated user (injected by Spring Security)
+     * @return 200 OK with the file as a Resource, or 404 if not found
+     */
     @GetMapping("/media/{id}")
     public ResponseEntity<Resource> getMediaAsset(@PathVariable("id") UUID id, @AuthenticationPrincipal User user) {
         MediaAsset mediaAsset = mediaAssetService.getMediaAsset(id, user);
@@ -57,6 +89,16 @@ public class MediaAssetController {
                 .body(file);
     }
 
+    /**
+     * Retrieves the metadata for a given media asset ID.
+     *
+     * The response includes the public representation of the media asset.
+     * Access is restricted to the owner of the media asset.
+     *
+     * @param id   the UUID of the media asset
+     * @param user the authenticated user (injected by Spring Security)
+     * @return 200 OK with MediaAssetResponse, or 404 if not found
+     */
     @GetMapping("/mediaAssets/{id}")
     public ResponseEntity<MediaAssetResponse> getMediaAssetInfo(@PathVariable("id") UUID id,
             @AuthenticationPrincipal User user) {
@@ -64,12 +106,34 @@ public class MediaAssetController {
         return ResponseEntity.ok(MediaAssetResponse.fromEntity(mediaAsset));
     }
 
+    /**
+     * Deletes a media asset for the authenticated user.
+     *
+     * The media asset is removed from the database and the associated
+     * stored file is deleted if it is no longer referenced by any other
+     * media assets. Access is restricted to the owner of the media asset.
+     *
+     * @param id   the UUID of the media asset to delete
+     * @param user the authenticated user (injected by Spring Security)
+     * @return 204 No Content if deletion was successful, or 404 if not found
+     */
     @DeleteMapping("/mediaAssets/{id}")
     public ResponseEntity<Void> deleteMediaAsset(@PathVariable("id") UUID id, @AuthenticationPrincipal User user) {
         mediaAssetService.deleteMediaAsset(id, user);
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Updates the name of a media asset for the authenticated user.
+     *
+     * The media asset's name is updated in the database. Access is
+     * restricted to the owner of the media asset.
+     *
+     * @param id   the UUID of the media asset to update
+     * @param name the new name for the media asset
+     * @param user the authenticated user (injected by Spring Security)
+     * @return 200 OK with the updated MediaAssetResponse, or 404 if not found
+     */
     @PatchMapping("/mediaAssets/{id}")
     public ResponseEntity<MediaAssetResponse> updateMediaAsset(@PathVariable("id") UUID id, @RequestParam("name") String name, @AuthenticationPrincipal User user) {
         MediaAsset mediaAsset = mediaAssetService.updateMediaAsset(id, name, user);

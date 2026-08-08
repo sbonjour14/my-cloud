@@ -13,6 +13,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+/**
+ * Scheduled job for cleaning up orphaned stored files.
+ *
+ * This job runs daily at 3 AM and identifies stored files that are not associated
+ * with any media assets. It deletes the physical files from the storage and removes
+ * their records from the database.
+ */
+
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -40,9 +49,6 @@ public class OrphanedFileCleanupJob {
                 log.info("Deleted orphaned file: {} ({})", storedFile.getId(), storedFile.getStoragePath());
             } catch (IOException e) {
                 log.error("Failed to delete physical file for {}: {}", storedFile.getId(), e.getMessage());
-                // On ne supprime pas la ligne DB si le fichier physique n'a pas pu être
-                // supprimé,
-                // pour ne pas perdre la trace du fichier orphelin resté sur disque.
             }
         }
     }

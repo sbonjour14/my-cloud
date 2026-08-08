@@ -21,6 +21,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents a user of the system.
+ *
+ * Each User has a unique email, a hashed password, and a display name.
+ * Users can own media assets, create albums, and establish friendships
+ * with other users. The role of the user determines their access level
+ * within the application.
+ */
+
 @Entity
 @Table(name = "users")
 @NoArgsConstructor

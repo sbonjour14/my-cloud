@@ -18,6 +18,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
+/**
+ * Represents a file stored in the system, which can be an image or video.
+ *
+ * Each StoredFile has a unique checksum to prevent duplicate storage,
+ * and contains metadata such as storage path, MIME type, size, and media type.
+ */
+
 @Entity
 @Table(name = "stored_files")
 @Getter

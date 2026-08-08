@@ -11,6 +11,14 @@ import lombok.Setter;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Represents a share of an album with another user.
+ *
+ * Each AlbumShare links an Album to a User, allowing the owner of
+ * the album to share access with other users. An AlbumShare is
+ * unique per combination of album and shared-with user.
+ */
+
 @Entity
 @Table(name = "album_shares", uniqueConstraints = @UniqueConstraint(columnNames = { "album_id",
         "shared_with_user_id" }))
