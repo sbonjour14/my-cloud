@@ -16,6 +16,8 @@ import type { RegisterFormBody } from "@/types";
 import { Button } from "../ui/button";
 import { toast } from "../ui/toast";
 import { useNavigate } from "react-router-dom"
+import { registerUser } from "@/lib/http-api/auth";
+import axios from "axios";
 
 const title = "Create your account";
 const description = "Set up your personal cloud space in seconds.";
@@ -52,29 +54,32 @@ export function RegisterForm() {
 
     const password = watch("password");
 
-    const onSubmit = async (data: any) => {
-        const res = await fetch("/api/auth/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        });
+    const onSubmit = async (data: RegisterFormValues) => {
+        const {confirmPassword, ...payload} = data;
+        try {
+            await registerUser(payload);
+            const id = toast.add({
+                type: "success",
+                description: "Account created with success",
+                actionProps: {
+                    children: "go to login",
+                    onClick() {
+                        navigate("/login");
+                        toast.close(id);
+                    }
+                }
+            })
 
-        const { message } = await res.json();
-        if (!res.ok) {
-            setError("form", { type: "server", message });
+        } catch (error) {
+            if(axios.isAxiosError(error) && error.response) {
+                const { message } = error.response.data;
+                setError("form", { type: "server", message });
+                return;
+            }
+            setError("form", { type: "server", message: "An unexpected error occurred" });
             return;
         }
-        const id = toast.add({
-            type: "success",
-            description: "Account created with success",
-            actionProps: {
-                children: "go to login",
-                onClick() {
-                    navigate("/login");      
-                    toast.close(id);
-                }
-            }
-        })
+
 
     };
 
