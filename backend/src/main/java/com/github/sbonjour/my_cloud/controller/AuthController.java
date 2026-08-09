@@ -50,9 +50,9 @@ public class AuthController {
      */
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         String token = authService.login(request.email(), request.password());
-        return ResponseEntity.ok(token);
+        return ResponseEntity.ok(new LoginResponse(token));
     }
 
     /**
@@ -81,5 +81,9 @@ public class AuthController {
     public record LoginRequest(
         @NotBlank(message = "Email is required") @Email(message = "Invalid email format") String email,
         @NotBlank(message = "Password is required") String password) {
+    }
+
+
+    public record LoginResponse(String token) {
     }
 }

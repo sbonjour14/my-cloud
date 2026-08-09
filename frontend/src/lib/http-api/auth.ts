@@ -7,8 +7,7 @@ export async function registerUser(payload: RegisterFormBody) : Promise<Register
     return response;
 }
 
-export async function loginUser(payload : LoginFormBody) : Promise<string> {
-    const {data : token} = await api.post("/auth/login", payload);
-    return token
-    
+export async function loginUser(payload: LoginFormBody) {
+    const { data } = await api.post("/auth/login", payload);
+    return data.token;
 }
