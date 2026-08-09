@@ -79,7 +79,7 @@ public class AuthController {
      * in controller methods.
      */
     public record LoginRequest(
-        @NotBlank(message = "Email is required") @Email(message = "Invalid email format") String email,
+        @NotBlank(message = "Email is required") String email,
         @NotBlank(message = "Password is required") String password) {
     }
 

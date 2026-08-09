@@ -50,7 +50,18 @@ export function LoginForm() {
             });
             navigate("/");
         } catch (error) {
-            console.log("CAUGHT ERROR:", error);
+            if (axios.isAxiosError(error)) {
+                setError("root", {
+                    type: "manual",
+                    message: error.response?.data?.message || "An error occurred during login.",
+                });
+                return;
+            }
+
+            setError("root", {
+                type: "manual",
+                message: "An unexpected error occurred",
+            });
         }
     };
 
