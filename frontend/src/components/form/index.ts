@@ -1,0 +1,1 @@
+export { RegisterForm as FormRegister } from "./RegisterForm"
