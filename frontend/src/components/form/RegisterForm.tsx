@@ -2,8 +2,6 @@ import {
     FieldGroup,
     FieldDescription,
     FieldLabel,
-    FieldLegend,
-    FieldSet,
     Field,
     FieldError,
 } from "@/components/ui/field";
@@ -15,26 +13,29 @@ import { useState } from "react";
 import type { RegisterFormBody } from "@/types";
 import { Button } from "../ui/button";
 import { toast } from "../ui/toast";
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "@/lib/http-api/auth";
 import axios from "axios";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { cn } from "@/lib/utils";
 
-const title = "Create your account";
-const description = "Set up your personal cloud space in seconds.";
 const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface RegisterFormValues extends RegisterFormBody {
     confirmPassword: string;
 }
 
-
-export function RegisterForm() {
+export function RegisterForm({
+    className,
+    ...props
+}: React.ComponentProps<"div">) {
     const {
         register,
         handleSubmit,
         watch,
         clearErrors,
         setError,
+        reset,
         formState: { errors },
     } = useForm<RegisterFormValues>({
         mode: "onSubmit",
@@ -50,12 +51,12 @@ export function RegisterForm() {
     const confirmPasswordInputType = isConfirmPasswordShown ? "text" : "password";
 
     const togglePassword = () => setIsPasswordShown((p) => !p);
-    const toggleRePassword = () => setIsConfirmPasswordShown((p) => !p);
+    const toggleConfirmPassword = () => setIsConfirmPasswordShown((p) => !p);
 
     const password = watch("password");
 
     const onSubmit = async (data: RegisterFormValues) => {
-        const {confirmPassword, ...payload} = data;
+        const { confirmPassword, ...payload } = data;
         try {
             await registerUser(payload);
             const id = toast.add({
@@ -66,37 +67,40 @@ export function RegisterForm() {
                     onClick() {
                         navigate("/login");
                         toast.close(id);
-                    }
-                }
-            })
-
+                    },
+                },
+            });
+            reset();
         } catch (error) {
-            if(axios.isAxiosError(error) && error.response) {
-                const { message } = error.response.data;
-                setError("form", { type: "server", message });
+            if (axios.isAxiosError(error) && error.response) {
+                setError("root", {
+                    type: "manual",
+                    message: error.response?.data?.message || "An error occurred during registration.",
+                });
                 return;
             }
-            setError("form", { type: "server", message: "An unexpected error occurred" });
-            return;
+
+            setError("root", {
+                type: "manual",
+                message: "An unexpected error occurred",
+            });
         }
-
-
     };
 
     return (
-        <div className="w-full max-w-md p-4 bg-white rounded-lg shadow-md dark:bg-gray-800">
-            <form onSubmit={handleSubmit(onSubmit)} onChange={() => clearErrors("form")}>
-                <FieldGroup>
-                    <FieldSet>
-                        <FieldLegend>{title}</FieldLegend>
-                        <FieldDescription>{description}</FieldDescription>
-                        <p className="text-sm text-red-600 min-h-5">
-                            {errors.form?.message}
-                        </p>
+        <div className={cn("flex flex-col gap-6 px-2", className)} {...props}>
+            <Card>
+                <CardHeader className="text-center">
+                    <CardTitle className="text-xl">Create your account</CardTitle>
+                    <CardDescription>
+                        Set up your personal cloud space in seconds.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit(onSubmit)} onChange={() => clearErrors("root")}>
                         <FieldGroup>
-                            {/* EMAIL */}
-                            <Field data-invalid={!!errors.email}>
-                                <FieldLabel htmlFor="email"></FieldLabel>
+                            <Field>
+                                <FieldLabel htmlFor="email">Email</FieldLabel>
                                 <InputGroup>
                                     <InputGroupAddon align={"inline-start"}>
                                         <Mail />
@@ -119,9 +123,8 @@ export function RegisterForm() {
                                 {!!errors.email && <FieldError>{errors.email?.message as string}</FieldError>}
                             </Field>
 
-                            {/* USERNAME */}
-                            <Field data-invalid={!!errors.displayName}>
-                                <FieldLabel htmlFor="username"></FieldLabel>
+                            <Field>
+                                <FieldLabel htmlFor="username">Username</FieldLabel>
                                 <InputGroup>
                                     <InputGroupAddon align={"inline-start"}>
                                         <UserIcon />
@@ -138,14 +141,14 @@ export function RegisterForm() {
                                             },
                                         })}
                                         aria-invalid={!!errors.displayName}
+                                        onChange={() => clearErrors("displayName")}
                                     />
                                 </InputGroup>
                                 {!!errors.displayName && <FieldError>{errors.displayName?.message as string}</FieldError>}
                             </Field>
 
-                            {/* PASSWORD */}
-                            <Field data-invalid={!!errors.password}>
-                                <FieldLabel htmlFor="password"></FieldLabel>
+                            <Field>
+                                <FieldLabel htmlFor="password">Password</FieldLabel>
                                 <InputGroup>
                                     <InputGroupInput
                                         type={passwordInputType}
@@ -159,9 +162,11 @@ export function RegisterForm() {
                                             },
                                         })}
                                         aria-invalid={!!errors.password}
+                                        onChange={() => clearErrors("password")}
                                     />
                                     <InputGroupAddon align={"inline-end"}>
                                         <InputGroupButton
+                                            type="button"
                                             tabIndex={-1}
                                             aria-label={isPasswordShown ? "hide password" : "show password"}
                                             onClick={togglePassword}
@@ -173,13 +178,12 @@ export function RegisterForm() {
                                 {!!errors.password && <FieldError>{errors.password?.message as string}</FieldError>}
                             </Field>
 
-                            {/* CONFIRM PASSWORD */}
-                            <Field data-invalid={!!errors.confirmPassword}>
-                                <FieldLabel htmlFor="re-password"></FieldLabel>
+                            <Field>
+                                <FieldLabel htmlFor="confirm-password">Confirm password</FieldLabel>
                                 <InputGroup>
                                     <InputGroupInput
                                         type={confirmPasswordInputType}
-                                        id="re-password"
+                                        id="confirm-password"
                                         placeholder="Confirm your password"
                                         {...register("confirmPassword", {
                                             required: "Please confirm your password",
@@ -187,12 +191,14 @@ export function RegisterForm() {
                                                 value === password || "Passwords do not match",
                                         })}
                                         aria-invalid={!!errors.confirmPassword}
+                                        onChange={() => clearErrors("confirmPassword")}
                                     />
                                     <InputGroupAddon align={"inline-end"}>
                                         <InputGroupButton
+                                            type="button"
                                             tabIndex={-1}
                                             aria-label={isConfirmPasswordShown ? "hide password" : "show password"}
-                                            onClick={toggleRePassword}
+                                            onClick={toggleConfirmPassword}
                                         >
                                             {isConfirmPasswordShown ? <Eye /> : <EyeOff />}
                                         </InputGroupButton>
@@ -202,13 +208,25 @@ export function RegisterForm() {
                                     <FieldError>{errors.confirmPassword?.message as string}</FieldError>
                                 )}
                             </Field>
+
+                            {!!errors.root && (
+                                <p className="text-sm text-red-600 text-center">{errors.root.message}</p>
+                            )}
+
+                            <Field>
+                                <Button type="submit">Create account</Button>
+                                <FieldDescription className="text-center">
+                                    Already have an account? <Link to="/login">Login</Link>
+                                </FieldDescription>
+                            </Field>
                         </FieldGroup>
-                    </FieldSet>
-                    <Field orientation="responsive">
-                        <Button type="submit">Submit</Button>
-                    </Field>
-                </FieldGroup>
-            </form>
+                    </form>
+                </CardContent>
+            </Card>
+            <FieldDescription className="px-6 text-center">
+                By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+                and <a href="#">Privacy Policy</a>.
+            </FieldDescription>
         </div>
     );
 }
