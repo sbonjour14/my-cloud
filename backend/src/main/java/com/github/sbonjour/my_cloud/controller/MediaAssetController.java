@@ -139,4 +139,16 @@ public class MediaAssetController {
         MediaAsset mediaAsset = mediaAssetService.updateMediaAsset(id, name, user);
         return ResponseEntity.ok(MediaAssetResponse.fromEntity(mediaAsset));
     }
+
+    /**
+     * Retrieves the total storage size used by the authenticated user's media assets.
+     * @param user the authenticated user (injected by Spring Security)
+     * @return 200 OK with the total size in bytes
+     */
+    @GetMapping("/mediaAssets/size")
+    public ResponseEntity<Long> getUserMediaAssetsSize(@AuthenticationPrincipal User user) {
+        Long size = mediaAssetService.getUserMediaAssetSize(user);
+
+        return ResponseEntity.ok(size);
+    }
 }

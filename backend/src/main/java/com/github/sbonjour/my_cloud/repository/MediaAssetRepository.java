@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
@@ -22,4 +24,14 @@ public interface MediaAssetRepository extends JpaRepository<MediaAsset, UUID> {
     Optional<MediaAsset> findByOwnerAndStoredFile(User owner, StoredFile storedFile);
 
     List<MediaAsset> findByStoredFile(StoredFile storedFile);
+
+    @Query(
+        """
+        SELECT SUM(s.sizeBytes) FROM StoredFile s
+        WHERE EXISTS (
+        SELECT 1 FROM MediaAsset ma WHERE ma.owner = :user AND ma.storedFile = s
+        )
+        """
+    )
+    Long getUserTotalStorageUsed(@Param("user") User user);
 }

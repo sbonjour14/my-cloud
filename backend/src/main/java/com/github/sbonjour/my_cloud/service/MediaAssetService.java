@@ -166,4 +166,8 @@ public class MediaAssetService {
         return mediaAssetRepository.save(mediaAsset);
     }
 
+    public Long getUserMediaAssetSize(User user) {
+        return mediaAssetRepository.getUserTotalStorageUsed(user);
+    }
+
 }
