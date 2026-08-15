@@ -4,10 +4,8 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { useTheme } from "./hooks/useTheme";
 
 export default function App() {
-  useTheme();
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

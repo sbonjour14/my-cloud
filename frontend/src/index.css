@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (@media (prefers-color-scheme: dark));
 
 :root {
   --text: #6b6375;
@@ -208,7 +208,8 @@ code {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-.dark {
+@media (prefers-color-scheme: dark){
+  :root {
   --text: #9ca3af;
   --text-h: #f3f4f6;
   --bg: #16171d;
@@ -250,11 +251,12 @@ code {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-}
-
-.dark #social .button-icon {
+  }
+#social .button-icon {
   filter: invert(1) brightness(2);
 }
+}
+
 
 @layer base {
   * {
