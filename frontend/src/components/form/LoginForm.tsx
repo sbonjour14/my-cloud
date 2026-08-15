@@ -127,9 +127,9 @@ export function LoginForm({
                                             placeholder="Enter your email"
                                             {...register("email", {
                                                 required: "Email is required",
+                                                onChange: () => clearErrors("email"),
                                             })}
                                             aria-invalid={!!errors.email}
-                                            onChange={() => clearErrors("email")}
                                         />
                                     </InputGroup>
                                     {!!errors.email && <FieldError>{errors.email?.message as string}</FieldError>}
@@ -137,8 +137,8 @@ export function LoginForm({
                                 <Field>
                                     <div className="flex items-center">
                                         <FieldLabel htmlFor="password">Password</FieldLabel>
-                                        <a
-                                            href="#"
+
+                                        <a href="#"
                                             className="ml-auto text-sm underline-offset-4 hover:underline"
                                         >
                                             Forgot your password?
@@ -151,9 +151,9 @@ export function LoginForm({
                                             placeholder="Enter your password"
                                             {...register("password", {
                                                 required: "Password is required",
+                                                onChange: () => clearErrors("password"),
                                             })}
                                             aria-invalid={!!errors.password}
-                                            onChange={() => clearErrors("password")}
                                         />
                                         <InputGroupAddon align={"inline-end"}>
                                             <InputGroupButton

@@ -115,9 +115,9 @@ export function RegisterForm({
                                                 value: emailRegex,
                                                 message: "Invalid email format",
                                             },
+                                            onChange: () => clearErrors("email"),
                                         })}
                                         aria-invalid={!!errors.email}
-                                        onChange={() => clearErrors("email")}
                                     />
                                 </InputGroup>
                                 {!!errors.email && <FieldError>{errors.email?.message as string}</FieldError>}
@@ -139,9 +139,9 @@ export function RegisterForm({
                                                 value: 3,
                                                 message: "Username must be at least 3 characters",
                                             },
+                                            onChange: () => clearErrors("displayName"),
                                         })}
                                         aria-invalid={!!errors.displayName}
-                                        onChange={() => clearErrors("displayName")}
                                     />
                                 </InputGroup>
                                 {!!errors.displayName && <FieldError>{errors.displayName?.message as string}</FieldError>}
@@ -160,9 +160,9 @@ export function RegisterForm({
                                                 value: 8,
                                                 message: "Password must be at least 8 characters",
                                             },
+                                            onChange: () => clearErrors("password"),
                                         })}
                                         aria-invalid={!!errors.password}
-                                        onChange={() => clearErrors("password")}
                                     />
                                     <InputGroupAddon align={"inline-end"}>
                                         <InputGroupButton
@@ -189,9 +189,9 @@ export function RegisterForm({
                                             required: "Please confirm your password",
                                             validate: (value) =>
                                                 value === password || "Passwords do not match",
+                                            onChange: () => clearErrors("confirmPassword"),
                                         })}
                                         aria-invalid={!!errors.confirmPassword}
-                                        onChange={() => clearErrors("confirmPassword")}
                                     />
                                     <InputGroupAddon align={"inline-end"}>
                                         <InputGroupButton
