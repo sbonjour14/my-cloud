@@ -11,7 +11,3 @@ export async function loginUser(payload: LoginFormBody) : Promise<string>{
     const { data } = await api.post("/auth/login", payload);
     return data.token as string;
 }
-
-export function logoutUser() {
-    localStorage.removeItem("my-cloud-token")
-}
