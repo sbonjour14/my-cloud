@@ -23,12 +23,18 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       THUMBNAIL_SECRET: ${THUMBNAIL_SECRET}
+      THUMBNAIL_CALLBACK_SECRET: ${THUMBNAIL_CALLBACK_SECRET}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     ports:
       - "8080:8080"
     volumes:
       - "./data/uploads:/app/uploads"
     depends_on:
       - db
+      - rabbitmq
     restart: unless-stopped
 
   frontend:
@@ -42,5 +48,34 @@ services:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
+      - backend
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: my-cloud-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
+
+  thumbnail-worker:
+    build:
+      context: ./thumbnail-service
+      dockerfile: Dockerfile
+    environment:
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      BACKEND_URL: http://backend:8080
+      THUMBNAIL_CALLBACK_SECRET: ${THUMBNAIL_CALLBACK_SECRET}
+    volumes:
+      - "./data/uploads:/app/uploads"
+    depends_on:
+      - rabbitmq
       - backend
     restart: unless-stopped
