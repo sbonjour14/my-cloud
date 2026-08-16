@@ -27,6 +27,9 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: 604800000
 
+thumbnail:
+  token:
+    secret: ${THUMBNAIL_SECRET}
 file:
   storage:
     path: "/app/uploads"
