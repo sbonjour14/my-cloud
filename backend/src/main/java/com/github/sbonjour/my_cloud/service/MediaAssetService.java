@@ -6,13 +6,16 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.github.sbonjour.my_cloud.config.RabbitMQConfig;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
@@ -32,6 +35,7 @@ public class MediaAssetService {
 
     private final MediaAssetRepository mediaAssetRepository;
     private final StoredFileRepository storedFileRepository;
+    private final RabbitTemplate rabbitTemplate;
 
     @Value("${file.storage.path:/app/uploads}")
     private String uploadPath;
@@ -108,7 +112,25 @@ public class MediaAssetService {
                 .storedFile(sf)
                 .build();
 
-        return mediaAssetRepository.save(mediaAsset);
+        mediaAsset = mediaAssetRepository.save(mediaAsset);
+        if (!sf.getHasThumbnail()) {
+            publishThumbnailGenerationMessage(mediaAsset);
+        }
+        return mediaAsset;
+    }
+
+    private void publishThumbnailGenerationMessage(MediaAsset mediaAsset) {
+        Map<String, String> message = Map.of(
+                "mediaAssetId", mediaAsset.getId().toString(),
+                "storagePath", mediaAsset.getStoredFile().getStoragePath());
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.THUMBNAIL_QUEUE, message);
+    }
+
+    public MediaAsset getMediaAsset(UUID id) {
+        MediaAsset mediaAsset = mediaAssetRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Media asset not found"));
+        return mediaAsset;
     }
 
     public MediaAsset getMediaAsset(UUID id, User user) {
