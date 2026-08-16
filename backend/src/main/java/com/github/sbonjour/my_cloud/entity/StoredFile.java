@@ -46,6 +46,9 @@ public class StoredFile {
     @Column(nullable = false)
     private String storagePath;
 
+    @Column
+    private Boolean hasThumbnail;
+
     @Column(nullable = false)
     private String mimeType;
 
@@ -62,5 +65,11 @@ public class StoredFile {
 
     public enum MediaType {
         IMAGE, VIDEO
+    }
+
+    public String getThumbnailPath() {
+        int lastSlash = storagePath.lastIndexOf('/');
+        String checksum = storagePath.substring(lastSlash + 1);
+        return storagePath.substring(0, lastSlash) + "/thumbnail/" + checksum;
     }
 }
