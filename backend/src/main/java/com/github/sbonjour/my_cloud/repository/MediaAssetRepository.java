@@ -15,11 +15,7 @@ import com.github.sbonjour.my_cloud.entity.User;
 public interface MediaAssetRepository extends JpaRepository<MediaAsset, UUID> {
     List<MediaAsset> findByOwner(User owner);
 
-    List<MediaAsset> findByOwnerOrderByUploadedAtAsc(User owner);
-
-    List<MediaAsset> findByOwnerOrderByUploadedAtDesc(User owner);
-
-    Optional<MediaAsset> findByOwnerAndFileNameIgnoringCase(User owner, String fileName);
+    Optional<MediaAsset> findByOwnerAndFilenameIgnoringCase(User owner, String fileName);
 
     Optional<MediaAsset> findByOwnerAndStoredFile(User owner, StoredFile storedFile);
 

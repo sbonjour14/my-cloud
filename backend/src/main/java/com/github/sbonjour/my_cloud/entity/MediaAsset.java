@@ -22,7 +22,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "media_assets", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "owner_id", "file_name" })
+        @UniqueConstraint(columnNames = { "owner_id", "filename" })
 })
 @Getter
 @Setter
@@ -45,9 +45,9 @@ public class MediaAsset {
     private StoredFile storedFile;
 
     @Column(nullable = false)
-    private String fileName;
+    private String filename;
 
     @Column(nullable = false, updatable = false)
     @Builder.Default
-    private Instant uploadedAt = Instant.now();
+    private Instant createdAt = Instant.now();
 }

@@ -77,7 +77,7 @@ public class MediaAssetService {
             throw new InternalServerErrorException("Error while accessing the file");
         }
 
-        if (mediaAssetRepository.findByOwnerAndFileNameIgnoringCase(owner, file.getOriginalFilename()).isPresent()) {
+        if (mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename()).isPresent()) {
             throw new ConflictException("A media asset with the same name already exists for this user");
         }
         String checksum = calculateChecksum(bytes);
@@ -108,12 +108,12 @@ public class MediaAssetService {
 
         MediaAsset mediaAsset = MediaAsset.builder()
                 .owner(owner)
-                .fileName(file.getOriginalFilename())
+                .filename(file.getOriginalFilename())
                 .storedFile(sf)
                 .build();
 
         mediaAsset = mediaAssetRepository.save(mediaAsset);
-        if (!sf.getHasThumbnail()) {
+        if (!sf.isHasThumbnail()) {
             publishThumbnailGenerationMessage(mediaAsset);
         }
         return mediaAsset;
@@ -180,11 +180,11 @@ public class MediaAssetService {
             throw new AccessDeniedException("You don't have access to this media asset");
         }
 
-        if (mediaAssetRepository.findByOwnerAndFileNameIgnoringCase(user, name).isPresent()) {
+        if (mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(user, name).isPresent()) {
             throw new ConflictException("A media asset with the same name already exists for this user");
         }
 
-        mediaAsset.setFileName(name);
+        mediaAsset.setFilename(name);
         return mediaAssetRepository.save(mediaAsset);
     }
 

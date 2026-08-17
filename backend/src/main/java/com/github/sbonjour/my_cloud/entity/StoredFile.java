@@ -47,7 +47,7 @@ public class StoredFile {
     private String storagePath;
 
     @Column
-    private Boolean hasThumbnail;
+    private boolean hasThumbnail;
 
     @Column(nullable = false)
     private String mimeType;

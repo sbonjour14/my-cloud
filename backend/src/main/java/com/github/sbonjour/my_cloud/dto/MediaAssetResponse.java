@@ -16,11 +16,11 @@ public record MediaAssetResponse(
     public static MediaAssetResponse fromEntity(com.github.sbonjour.my_cloud.entity.MediaAsset mediaAsset) {
         return new MediaAssetResponse(
             mediaAsset.getId(),
-            mediaAsset.getFileName(),
+            mediaAsset.getFilename(),
             "/media/" + mediaAsset.getId(),
             mediaAsset.getStoredFile().getMediaType(),
             UserResponse.fromEntity(mediaAsset.getOwner()),
-            mediaAsset.getUploadedAt()
+            mediaAsset.getCreatedAt()
         );
     }
     
