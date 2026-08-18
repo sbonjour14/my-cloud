@@ -18,3 +18,11 @@ export type RegisterResponse = {
   createdAt : string,
   role : Role,
 }
+
+export type UserResponse = {
+  id: string,
+  email: string,
+  displayName: string,
+  role: Role,
+  createdAt: string
+}
