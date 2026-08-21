@@ -31,7 +31,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - "./data/uploads:/app/uploads"
+      - ${DISK_PATH}:/app/uploads
     depends_on:
       - db
       - rabbitmq
@@ -75,7 +75,7 @@ services:
       BACKEND_URL: http://backend:8080
       THUMBNAIL_CALLBACK_SECRET: ${THUMBNAIL_CALLBACK_SECRET}
     volumes:
-      - "./data/uploads:/app/uploads"
+      - ${DISK_PATH}:/app/uploads
     depends_on:
       - rabbitmq
       - backend
