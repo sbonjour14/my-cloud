@@ -192,4 +192,11 @@ public class MediaAssetService {
         return mediaAssetRepository.getUserTotalStorageUsed(user);
     }
 
+    public void markThumbnailReady(UUID id) {
+        MediaAsset ma = getMediaAsset(id);
+        StoredFile sf = ma.getStoredFile();
+        sf.setHasThumbnail(true);
+        storedFileRepository.save(sf);
+    }
+
 }
