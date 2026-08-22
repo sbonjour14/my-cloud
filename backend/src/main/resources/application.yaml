@@ -30,6 +30,8 @@ jwt:
 thumbnail:
   token:
     secret: ${THUMBNAIL_SECRET}
+  callback:
+    secret: ${THUMBNAIL_CALLBACK_SECRET}
 file:
   storage:
     path: "/app/uploads"
