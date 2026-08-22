@@ -1,5 +1,6 @@
 package com.github.sbonjour.my_cloud.controller;
 
+import java.net.http.HttpRequest;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,6 +66,11 @@ public class MediaAssetController {
                 .map(MediaAssetResponse::fromEntity)
                 .toList();
         return ResponseEntity.ok(response);
+    }
+    @PatchMapping("/media/{id}/thumbnail-ready")
+    public ResponseEntity<?> markThumbnailReady(@PathVariable("id") UUID id, HttpRequest request) {
+        mediaAssetService.markThumbnailReady(id);
+        return ResponseEntity.ok(null);
     }
 
     /**
