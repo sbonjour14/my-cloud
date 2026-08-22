@@ -1,5 +1,6 @@
 package com.github.sbonjour.my_cloud.config;
 
+import com.github.sbonjour.my_cloud.security.InternalSecretFilter;
 import com.github.sbonjour.my_cloud.security.JwtAuthenticationFilter;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final InternalSecretFilter internalSecretFilter;
 
     /**
      * Provides the password encoder used for hashing and verifying
@@ -61,6 +63,7 @@ public class SecurityConfig {
                                 .sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                         .accessDeniedHandler((request, response, accessDeniedException) -> response
                                 .sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")))
+                .addFilterBefore(internalSecretFilter, JwtAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
