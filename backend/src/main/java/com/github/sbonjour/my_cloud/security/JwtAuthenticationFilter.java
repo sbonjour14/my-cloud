@@ -30,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !pathMatcher.match(INTERNAL_PATH_PATTERN, request.getRequestURI());
+        return pathMatcher.match(INTERNAL_PATH_PATTERN, request.getRequestURI());
     }
 
 
