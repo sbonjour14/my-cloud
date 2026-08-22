@@ -59,14 +59,22 @@ def notify_backend(media_asset_id: str):
     response.raise_for_status()
 
 
-def on_message(channel, method, properties, body):
+def on_message(channel, method, body):
     message = json.loads(body)
     media_asset_id = message["mediaAssetId"]
     storage_path = message["storagePath"]
 
-    print(f"Traitement de {media_asset_id} ({storage_path})")
+
 
     try:
+        if os.path.exists(storage_path):
+            print(f"Thumbnail déjà existant pour : {media_asset_id} ({storage_path})")
+            notify_backend(media_asset_id)
+            print(f"Backend notifié pour {media_asset_id}")
+            channel.basic_ack(delivery_tag=method.delivery_tag)
+            return
+
+        print(f"Traitement de {media_asset_id} ({storage_path})")
         thumbnail_path = generate_thumbnail(storage_path)
         print(f"Miniature créée : {thumbnail_path}")
 
