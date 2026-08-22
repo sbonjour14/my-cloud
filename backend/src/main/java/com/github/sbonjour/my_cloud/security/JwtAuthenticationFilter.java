@@ -9,6 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.github.sbonjour.my_cloud.entity.User;
@@ -24,6 +25,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private static final String INTERNAL_PATH_PATTERN = "/media/*/thumbnail-ready";
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return !pathMatcher.match(INTERNAL_PATH_PATTERN, request.getRequestURI());
+    }
+
 
     /**
      * Filters incoming HTTP requests to authenticate users based on JWT tokens.
