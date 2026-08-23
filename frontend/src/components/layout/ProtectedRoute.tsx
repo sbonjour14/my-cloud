@@ -29,7 +29,7 @@ export function ProtectedRoute() {
 
     }, []);
     if(isLoading)
-        return <p>loading</p>;
+        return null;
 
     if(!isValid)
         return <Navigate to={"/login"} replace/>
