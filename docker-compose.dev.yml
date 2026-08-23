@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:18-alpine
-    container_name: my-cloud-db
+    container_name: my-cloud-db-dev
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -9,14 +9,23 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - ./data/postgres:/var/lib/postgresql
-    restart: unless-stopped
+      - ./data/postgres-dev:/var/lib/postgresql
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: my-cloud-rabbitmq-dev
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
 
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: my-cloud-backend
+      dockerfile: Dockerfile.dev
+    container_name: my-cloud-backend-dev
     environment:
       - SPRING_DATASOURCE_URL=${DB_URL}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
@@ -28,52 +37,45 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=${RABBITMQ_USER}
       - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
-      - DDL_AUTO_VALUE=${DDL_AUTO_VALUE}
+      - DDL_AUTO_VALUE=${DDL_AUTO_VALUE_DEV}
       - ROOT_DISPLAYNAME=${ROOT_DISPLAYNAME}
       - ROOT_PASSWORD=${ROOT_PASSWORD}
       - ROOT_EMAIL=${ROOT_EMAIL}
     ports:
       - "8080:8080"
     volumes:
+      - ./backend/src:/app/src
+      - ./backend/pom.xml:/app/pom.xml
       - ${DISK_PATH}:/app/uploads
+      - maven-repo:/root/.m2
     depends_on:
       - db
       - rabbitmq
-    restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=${VITE_API_URL}
-    container_name: my-cloud-frontend
+      dockerfile: Dockerfile.dev
+    container_name: my-cloud-frontend-dev
     environment:
-      - VITE_API_URL=${VITE_API_URL}
+      - VITE_API_URL="http://localhost:8080"
+      - CHOKIDAR_USEPOLLING=true
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
-    restart: unless-stopped
-
-  rabbitmq:
-    image: rabbitmq:4-management-alpine
-    container_name: my-cloud-rabbitmq
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    restart: unless-stopped
 
   thumbnail-worker:
     build:
       context: ./thumbnail-service
       dockerfile: Dockerfile
+    container_name: my-cloud-thumbnail-dev
     environment:
-      RABBITMQ_HOST: ${RABBITMQ_HOST}
-      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       BACKEND_URL: http://backend:8080
@@ -83,10 +85,6 @@ services:
     depends_on:
       - rabbitmq
       - backend
-    restart: unless-stopped
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
-    depends_on:
-      - frontend 
+volumes:
+  maven-repo:

@@ -24,6 +24,11 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: 604800000
 
+root:
+  email: ${ROOT_EMAIL}
+  password: ${ROOT_PASSWORD}
+  displayName: ${ROOT_DISPLAYNAME}
+
 thumbnail:
   token:
     secret: ${THUMBNAIL_SECRET}
