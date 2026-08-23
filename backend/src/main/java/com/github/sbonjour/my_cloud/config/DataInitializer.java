@@ -13,11 +13,11 @@ import com.github.sbonjour.my_cloud.repository.UserRepository;
 
 @Configuration
 public class DataInitializer {
-    @Value("root.email")
+    @Value("${root.email}")
     private String rootEmail;
-    @Value("root.displayName")
+    @Value("${root.displayName}")
     private String rootDisplayName;
-    @Value("root.password")
+    @Value("${root.password}")
     private String rootPassword;
 
 
@@ -35,6 +35,7 @@ public class DataInitializer {
 
                 userRepository.save(root);
             }
+            System.out.println("Root user added !");
         };
     }
     
