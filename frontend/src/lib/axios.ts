@@ -1,12 +1,13 @@
 import axios from 'axios';
+const apiUrl = import.meta.env.VITE_API_URL;
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL: apiUrl,
     withCredentials: true,
 
 })
 
-console.log(import.meta.env.VITE_API_URL);
+console.log(apiUrl);
 
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem("my-cloud-token");
