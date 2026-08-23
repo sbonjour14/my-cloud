@@ -140,6 +140,7 @@ export function LoginForm({
 
                                         <a href="#"
                                             className="ml-auto text-sm underline-offset-4 hover:underline"
+                                            tabIndex={-1}
                                         >
                                             Forgot your password?
                                         </a>
