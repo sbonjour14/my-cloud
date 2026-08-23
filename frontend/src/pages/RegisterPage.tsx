@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 export default function RegisterPage() {
     const navigate = useNavigate();
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
+        <div className="flex min-h-svh flex-col items-center justify-center bg-background gap-6 p-6 md:p-10">
             <div className="absolute left-0 top-0 p-2 text-foreground cursor-pointer"
                 onClick={() => navigate(-1)}>
                 <ArrowLeft />

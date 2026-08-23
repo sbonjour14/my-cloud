@@ -16,7 +16,7 @@ export function TestPage() {
     };
 
     return (
-        <div className="bg-muted w-full min-h-screen flex flex-col gap-5 items-center">
+        <div className="w-full min-h-screen flex flex-col gap-5 items-center">
             <Link to={"/register"}> go to register</Link>
             <Link to={"/login"}> go to login</Link>
             <input
@@ -27,6 +27,10 @@ export function TestPage() {
             />
             <Button onClick={() => inputRef.current?.click()}>
                 chose a file
+            </Button>
+
+            <Button onClick={() => {localStorage.removeItem("my-cloud-token"); window.location.reload()}}>
+                log out
             </Button>
             <UploadDialog
                 open={isOpen}
