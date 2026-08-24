@@ -10,7 +10,6 @@ public record MediaAssetResponse(
     String filename,
     String url,
     MediaType mediaType,
-    UserResponse owner,
     Instant createdAt
 ) {
     public static MediaAssetResponse fromEntity(com.github.sbonjour.my_cloud.entity.MediaAsset mediaAsset) {
@@ -19,7 +18,6 @@ public record MediaAssetResponse(
             mediaAsset.getFilename(),
             "/media/" + mediaAsset.getId(),
             mediaAsset.getStoredFile().getMediaType(),
-            UserResponse.fromEntity(mediaAsset.getOwner()),
             mediaAsset.getCreatedAt()
         );
     }
