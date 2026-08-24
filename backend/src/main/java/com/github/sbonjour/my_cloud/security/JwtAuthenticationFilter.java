@@ -2,9 +2,11 @@ package com.github.sbonjour.my_cloud.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +18,7 @@ import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.repository.UserRepository;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +30,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserRepository userRepository;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private static final String INTERNAL_PATH_PATTERN = "/media/*/thumbnail-ready";
+
+    private String extractTokenFromCookie(HttpServletRequest request) {
+
+        if(request.getCookies() == null)
+            return null;
+
+        return Arrays.stream(request.getCookies())
+                        .filter(cookie -> cookie.getName().equals("my-cloud-token"))
+                        .findFirst()
+                        .map(Cookie::getValue)
+                        .orElse(null);
+    }
+
+
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -52,15 +69,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+            
+        
 
-        String authHeader = request.getHeader("Authorization");
+        String token = extractTokenFromCookie(request);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if(token == null){
             filterChain.doFilter(request, response);
             return;
         }
-
-        String token = authHeader.substring(7);
 
         if (jwtService.isTokenValid(token)) {
             UUID userId = jwtService.extractUserId(token);
@@ -71,7 +88,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // Add the user's role as a Spring Security authority, prefixed with "ROLE_"
             var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
 
             var authentication = new UsernamePasswordAuthenticationToken(

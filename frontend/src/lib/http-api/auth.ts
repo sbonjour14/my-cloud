@@ -1,13 +1,15 @@
 import { api } from "../axios";
-import type { LoginFormBody, RegisterFormBody, RegisterResponse } from "@/types";
+import type { LoginFormBody, RegisterFormBody } from "@/types";
 
 
-export async function registerUser(payload: RegisterFormBody) : Promise<RegisterResponse> {
-    const {data : response} = await api.post("/auth/register", payload);
-    return response as RegisterResponse;
+export async function registerUser(payload: RegisterFormBody) : Promise<void> {
+    await api.post("/auth/register", payload);
 }
 
-export async function loginUser(payload: LoginFormBody) : Promise<string>{
-    const { data } = await api.post("/auth/login", payload);
-    return data.token as string;
+export async function loginUser(payload: LoginFormBody) : Promise<void>{
+    await api.post("/auth/login", payload);
+}
+
+export async function logoutUser() : Promise<void>{
+    await api.post("/auth/logout");
 }

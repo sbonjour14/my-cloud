@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { UploadDialog } from "@/components/ui/upload-dialog";
 import { useUploadFile } from "@/hooks/useUploadFile";
+import { logoutUser } from "@/lib/http-api/auth";
 import { useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function TestPage() {
-    const { upload, isOpen, status, progress, close } = useUploadFile();
+    const navigate = useNavigate();
+    const { upload } = useUploadFile();
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,15 +30,9 @@ export function TestPage() {
                 chose a file
             </Button>
 
-            <Button onClick={() => {localStorage.removeItem("my-cloud-token"); window.location.reload()}}>
+            <Button onClick={async () => {await logoutUser(); navigate("/login")}}>
                 log out
             </Button>
-            <UploadDialog
-                open={isOpen}
-                progress={progress}
-                status={status}
-                onClose={close}
-            />
         </div>
     )
 }

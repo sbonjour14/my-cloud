@@ -4,11 +4,17 @@ import com.github.sbonjour.my_cloud.dto.UserResponse;
 import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.service.AuthService;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+
+import java.time.Duration;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,9 +56,33 @@ public class AuthController {
      */
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         String token = authService.login(request.email(), request.password());
+        ResponseCookie cookie = ResponseCookie.from("my-cloud-token", token)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("strict")
+                .path("/")
+                .maxAge(Duration.ofHours(24))
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        ;
         return ResponseEntity.ok(new LoginResponse(token));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("my-cloud-token", "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        System.out.println("cookie enlevé");
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -79,10 +109,9 @@ public class AuthController {
      * in controller methods.
      */
     public record LoginRequest(
-        @NotBlank(message = "Email is required") String email,
-        @NotBlank(message = "Password is required") String password) {
+            @NotBlank(message = "Email is required") String email,
+            @NotBlank(message = "Password is required") String password) {
     }
-
 
     public record LoginResponse(String token) {
     }

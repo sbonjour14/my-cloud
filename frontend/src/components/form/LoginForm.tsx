@@ -44,8 +44,7 @@ export function LoginForm({
 
     const onSubmit = async (data: LoginFormBody) => {
         try {
-            const token = await loginUser(data);
-            localStorage.setItem("my-cloud-token", token);
+            await loginUser(data);
             toast.add({
                 type: "success",
                 description: "You have been logged in successfully.",
