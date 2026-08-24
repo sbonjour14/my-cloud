@@ -18,3 +18,9 @@ export async function uploadFile(file: File): Promise<MediaAssetResponse> {
 
   return response as MediaAssetResponse;
 }
+
+
+export async function getMediaAssets() : Promise<MediaAssetResponse[]> {
+  const {data: response } = await api.get("/mediaAssets");
+  return response as MediaAssetResponse[];
+}
