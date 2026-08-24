@@ -1,3 +1,4 @@
+import type { MediaAssetResponse } from "@/types";
 import { api } from "../axios";
 
 
@@ -7,11 +8,13 @@ export async function getStorageUsed() : Promise<number> {
     return response;
 } 
 
-export async function uploadFile(file: File): Promise<void> {
+export async function uploadFile(file: File): Promise<MediaAssetResponse> {
   const formData = new FormData()
   formData.append("file", file)
 
-  await api.post("/mediaAssets", formData, {
+  const {data: response} = await api.post("/mediaAssets", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   })
+
+  return response as MediaAssetResponse;
 }
