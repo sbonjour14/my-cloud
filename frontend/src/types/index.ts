@@ -26,3 +26,11 @@ export type UserResponse = {
   role: Role,
   createdAt: string
 }
+
+export type MediaAssetResponse = {
+  id: string,
+  filename: string,
+  url: string
+  mediaType: string,
+  createdAt: string,
+}
