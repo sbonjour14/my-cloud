@@ -1,6 +1,7 @@
 package com.github.sbonjour.my_cloud.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,4 +45,58 @@ class MediaAssetsRepositoryTests extends AbstractPostgresContainerTest {
         assertThat(found.get(0).getFilename()).isEqualTo("test-filename");
     }
 
+
+    @Test
+    void shouldNotFindByOwner() {
+        User owner = TestDataFactory.persistUser(entityManager, "test@gmail.com", "owner", "hashedPassword");
+        User otherOwner = TestDataFactory.persistUser(entityManager, "othertest@gmail.com", "other", "hashedPassword");
+
+        StoredFile file = TestDataFactory.persistStoredFile(entityManager, "file-checksum", MediaType.IMAGE, "file-mime-type", 10, "file.jpg");
+
+        TestDataFactory.persistMediaAsset(entityManager, owner, file, "test-filename");
+
+        List<MediaAsset> found = repository.findByOwner(otherOwner);
+
+        assertThat(found.isEmpty());
+    }
+
+    @Test
+    void shouldFindByOwnerAndFileNameIgnoringCase(){
+        User owner = TestDataFactory.persistUser(entityManager, "test@example.com", "test", "password1");
+        User otherOwner = TestDataFactory.persistUser(entityManager, "other@example.com", "other", "password2");
+
+        StoredFile file = TestDataFactory.persistStoredFile(entityManager, "file-checksum", MediaType.IMAGE, "file-mime-type", 10, "file.jpg");
+        StoredFile otherFile = TestDataFactory.persistStoredFile(entityManager, "other-file-checksum", MediaType.IMAGE, "other-file-mime-type", 10, "other-file.jpg");
+
+        TestDataFactory.persistMediaAsset(entityManager, owner, file, "file1");
+        MediaAsset asset = TestDataFactory.persistMediaAsset(entityManager, owner, otherFile, "file2");
+        TestDataFactory.persistMediaAsset(entityManager, otherOwner, otherFile, "file2");
+        
+        Optional<MediaAsset> found = repository.findByOwnerAndFilenameIgnoringCase(owner, "FiLe2");
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getId()).isEqualTo(asset.getId());
+        assertThat(found.get().getOwner().getId()).isEqualTo(owner.getId());
+
+    }
+    
+    @Test
+    void shouldNotFindByOwnerAndFileNameIgnoringCase(){
+        User owner = TestDataFactory.persistUser(entityManager, "test@example.com", "test", "password1");
+        User otherOwner = TestDataFactory.persistUser(entityManager, "other@example.com", "other", "password2");
+
+        StoredFile file = TestDataFactory.persistStoredFile(entityManager, "file-checksum", MediaType.IMAGE, "file-mime-type", 10, "file.jpg");
+        StoredFile otherFile = TestDataFactory.persistStoredFile(entityManager, "other-file-checksum", MediaType.IMAGE, "other-file-mime-type", 10, "other-file.jpg");
+
+        TestDataFactory.persistMediaAsset(entityManager, owner, file, "file1");
+        TestDataFactory.persistMediaAsset(entityManager, owner, otherFile, "file2");
+        TestDataFactory.persistMediaAsset(entityManager, otherOwner, otherFile, "file2");
+        
+        Optional<MediaAsset> foundWithWrongName = repository.findByOwnerAndFilenameIgnoringCase(owner, "FiLe3");
+        Optional<MediaAsset> foundWithWrongOwner = repository.findByOwnerAndFilenameIgnoringCase(otherOwner, "FiLe1");
+
+        assertThat(foundWithWrongName).isEmpty();
+        assertThat(foundWithWrongOwner).isEmpty();
+
+    }
 }
