@@ -99,4 +99,41 @@ class MediaAssetsRepositoryTests extends AbstractPostgresContainerTest {
         assertThat(foundWithWrongOwner).isEmpty();
 
     }
+
+
+    @Test
+    void shouldFindByOwnerAndStoredFile_whenOwnerHasMultipleMediaAssets() {
+        User owner = TestDataFactory.persistUser(entityManager, "owner@test.com", "owner", "hashedPassword");
+
+        StoredFile file1 = TestDataFactory.persistStoredFile(entityManager, "file1Checksum", MediaType.IMAGE, "file1MimeType", 10, "/uploads/file1Checksum");
+        StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2Checksum", MediaType.IMAGE, "file2MimeType", 100, "/uploads/file2Checksum");
+
+        MediaAsset mediaAsset1 = TestDataFactory.persistMediaAsset(entityManager, owner, file1, "file1.jpg");
+        TestDataFactory.persistMediaAsset(entityManager, owner, file2, "file2.jpg");
+
+        Optional<MediaAsset> found = repository.findByOwnerAndStoredFile(owner, file1);
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getId()).isEqualTo(mediaAsset1.getId());
+        assertThat(found.get().getOwner().getId()).isEqualTo(owner.getId());
+        assertThat(found.get().getStoredFile().getId()).isEqualTo(file1.getId());
+    }
+
+    @Test
+    void shouldFindByOwnerAndStoredFile_whenOwnersShareSameStoredFile() {
+        User owner = TestDataFactory.persistUser(entityManager, "owner@test.com", "owner", "hashedPassword");
+        User otherOwner = TestDataFactory.persistUser(entityManager, "otherOwner@test.com", "otherOwner", "otherHashedPassword");
+
+        StoredFile file1 = TestDataFactory.persistStoredFile(entityManager, "file1Checksum", MediaType.IMAGE, "file1MimeType", 10, "/uploads/file1Checksum");
+
+        MediaAsset mediaAsset1 = TestDataFactory.persistMediaAsset(entityManager, owner, file1, "file1.jpg");
+        TestDataFactory.persistMediaAsset(entityManager, otherOwner, file1, "otherFile1.jpg");
+
+        Optional<MediaAsset> found = repository.findByOwnerAndStoredFile(owner, file1);
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getId()).isEqualTo(mediaAsset1.getId());
+        assertThat(found.get().getOwner().getId()).isEqualTo(owner.getId());
+        assertThat(found.get().getStoredFile().getId()).isEqualTo(file1.getId());
+    }
 }
