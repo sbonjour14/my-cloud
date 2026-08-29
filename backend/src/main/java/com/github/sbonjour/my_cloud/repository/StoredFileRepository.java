@@ -16,7 +16,7 @@ public interface StoredFileRepository extends JpaRepository<StoredFile, UUID> {
 
     List<StoredFile> findByMediaType(StoredFile.MediaType mediaType);
 
-    @Query("SELECT SUM(s.sizeBytes) FROM StoredFile s")
+    @Query("SELECT COALESCE(SUM(s.sizeBytes), 0) FROM StoredFile s")
     Long getTotalStorageUsed();
 
     @Query("""
