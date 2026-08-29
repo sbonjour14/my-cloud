@@ -180,4 +180,56 @@ class MediaAssetsRepositoryTests extends AbstractPostgresContainerTest {
 
         assertThat(found).isEmpty();
     }
+    
+    @Test
+    void shouldFindByStoredFile_WhenUsedByOneUser() {
+        User owner = TestDataFactory.persistUser(entityManager, "owner@test.com", "owner", "hashedPassword");
+
+        StoredFile file1 = TestDataFactory.persistStoredFile(entityManager, "file1Checksum", MediaType.IMAGE,
+                "file1MimeType", 10, "/uploads/file1Checksum");
+        StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2Checksum", MediaType.IMAGE,
+                "file2MimeType", 10, "/uploads/file2Checksum");
+        
+        MediaAsset mediaAsset1 = TestDataFactory.persistMediaAsset(entityManager, owner, file1, "file1.jpg");
+        TestDataFactory.persistMediaAsset(entityManager, owner, file2, "file2.jpg");
+
+        List<MediaAsset> found = repository.findByStoredFile(file1);
+
+        assertThat(found).hasSize(1).containsExactly(mediaAsset1);
+    }
+    
+    @Test
+    void shouldFindByStoredFile_WhenUsedByMultipleUsers() {
+        User owner = TestDataFactory.persistUser(entityManager, "owner@test.com", "owner", "hashedPassword");
+        User otherOwner = TestDataFactory.persistUser(entityManager, "otherOwner@test.com", "otherOwner", "hashedPassword");
+
+        StoredFile file1 = TestDataFactory.persistStoredFile(entityManager, "file1Checksum", MediaType.IMAGE,
+                "file1MimeType", 10, "/uploads/file1Checksum");
+        StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2Checksum", MediaType.IMAGE,
+                "file2MimeType", 10, "/uploads/file2Checksum");
+        
+        MediaAsset mediaAsset1 = TestDataFactory.persistMediaAsset(entityManager, owner, file1, "file1.jpg");
+        MediaAsset mediaAsset2 = TestDataFactory.persistMediaAsset(entityManager, otherOwner, file1, "otherFile1.jpg");
+        TestDataFactory.persistMediaAsset(entityManager, owner, file2, "file2.jpg");
+
+        List<MediaAsset> found = repository.findByStoredFile(file1);
+
+        assertThat(found).hasSize(2).containsExactlyInAnyOrder(mediaAsset1, mediaAsset2);
+    }
+
+    @Test
+    void shouldNotFindByStoredFile() {
+        User owner = TestDataFactory.persistUser(entityManager, "owner@test.com", "owner", "hashedPassword");
+
+        StoredFile file1 = TestDataFactory.persistStoredFile(entityManager, "file1Checksum", MediaType.IMAGE,
+                "file1MimeType", 10, "/uploads/file1Checksum");
+        StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2Checksum", MediaType.IMAGE,
+                "file2MimeType", 10, "/uploads/file2Checksum");
+        
+        TestDataFactory.persistMediaAsset(entityManager, owner, file1, "file1.jpg");
+
+        List<MediaAsset> found = repository.findByStoredFile(file2);
+
+        assertThat(found).hasSize(0);
+    }
 }
