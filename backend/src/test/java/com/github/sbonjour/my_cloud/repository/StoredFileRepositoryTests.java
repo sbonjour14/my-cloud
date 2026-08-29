@@ -61,7 +61,31 @@ public class StoredFileRepositoryTests extends AbstractPostgresContainerTest {
 
             assertThat(found).isEmpty();
         }
+    }
 
+    @Nested
+    class ExistsByChecksum {
+        final String file1Checksum = "file1-checksum";
+        StoredFile file1;
+
+        @BeforeEach
+        void setUp() {
+            file1 = TestDataFactory.persistStoredFile(entityManager, file1Checksum, MediaType.IMAGE, "file1MimeType", 10,
+                    "/uploads/" + file1Checksum);
+        }
+
+        @Test
+        void shouldExistsByChecksum() {
+            boolean exists = repository.existsByChecksum(file1Checksum);
+
+            assertThat(exists).isEqualTo(true);
+        }
+        @Test
+        void shouldNotExistsByChecksum() {
+            boolean exists = repository.existsByChecksum("wrong-checksum");
+
+            assertThat(exists).isEqualTo(false);
+        }
     }
 
 }
