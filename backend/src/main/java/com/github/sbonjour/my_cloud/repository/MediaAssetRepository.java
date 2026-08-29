@@ -23,7 +23,7 @@ public interface MediaAssetRepository extends JpaRepository<MediaAsset, UUID> {
 
     @Query(
         """
-        SELECT SUM(s.sizeBytes) FROM StoredFile s
+        SELECT COALESCE(SUM(s.sizeBytes), 0) FROM StoredFile s
         WHERE EXISTS (
         SELECT 1 FROM MediaAsset ma WHERE ma.owner = :user AND ma.storedFile = s
         )
