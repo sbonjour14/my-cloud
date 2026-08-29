@@ -62,7 +62,7 @@ class MediaAssetRepositoryTests extends AbstractPostgresContainerTest {
 
                         List<MediaAsset> found = repository.findByOwner(otherOwner);
 
-                        assertThat(found.isEmpty());
+                        assertThat(found).isEmpty();
                 }
         }
 
@@ -215,6 +215,22 @@ class MediaAssetRepositoryTests extends AbstractPostgresContainerTest {
 
                         assertThat(found).isEmpty();
                 }
+        }
+        
+        @Nested
+        class FindByStoredFile {
+                User owner;
+                StoredFile file1;
+
+                @BeforeEach
+                void setUp() {
+                        owner = TestDataFactory.persistUser(entityManager, "owner@test.com", "owner",
+                                        "hashedPassword");
+
+                        file1 = TestDataFactory.persistStoredFile(entityManager, "file1Checksum",
+                                        MediaType.IMAGE,
+                                        "file1MimeType", 10, "/uploads/file1Checksum");
+                }
 
                 @Test
                 void shouldFindByStoredFile_WhenUsedByOneUser() {
@@ -264,6 +280,7 @@ class MediaAssetRepositoryTests extends AbstractPostgresContainerTest {
 
                         assertThat(found).hasSize(0);
                 }
+
         }
 
         @Nested
@@ -300,6 +317,23 @@ class MediaAssetRepositoryTests extends AbstractPostgresContainerTest {
                         long found = repository.getUserTotalStorageUsed(owner);
 
                         assertThat(found).isEqualTo(0);
+                }
+                
+                @Test
+                void shouldGetTotalUserStorageUsed_whenUserHasMultipleMediaAssets() {
+                        long storedFile2Size = 234032;
+                        long storedFile3Size = 32032;
+
+                        StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2-checksum", MediaType.VIDEO, "file2MimeType", storedFile2Size, "/uploads/file2Checksum");
+                        StoredFile file3 = TestDataFactory.persistStoredFile(entityManager, "file3-checksum", MediaType.VIDEO, "file3MimeType", storedFile3Size, "/uploads/file3Checksum");
+
+                        TestDataFactory.persistMediaAsset(entityManager, owner, file1, "file1.jpg");
+                        TestDataFactory.persistMediaAsset(entityManager, owner, file2, "file2.jpg");
+                        TestDataFactory.persistMediaAsset(entityManager, owner, file3, "file3.jpg");
+
+                        long found = repository.getUserTotalStorageUsed(owner);
+
+                        assertThat(found).isEqualTo(storedFileSize + storedFile2Size + storedFile3Size);
                 }
         }
 }
