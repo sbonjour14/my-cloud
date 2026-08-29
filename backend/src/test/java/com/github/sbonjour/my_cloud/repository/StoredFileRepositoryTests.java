@@ -192,4 +192,67 @@ public class StoredFileRepositoryTests extends AbstractPostgresContainerTest {
         }
     }
 
+    @Nested
+    class FindOrphaned {
+
+        @Test
+        void shouldFindOrphaned_whenStoredFileHasNoMediaAsset() {
+            StoredFile orphan = TestDataFactory.persistStoredFile(entityManager, "orphan-checksum",
+                    MediaType.IMAGE, "image/jpeg", 10, "/uploads/orphan-checksum");
+
+            List<StoredFile> found = repository.findOrphaned();
+
+            assertThat(found).containsExactly(orphan);
+        }
+
+        @Test
+        void shouldNotFindOrphaned_whenStoredFileHasMediaAsset() {
+            User owner = TestDataFactory.persistUser(entityManager, "owner@test.com", "owner", "hashedPassword");
+            StoredFile file = TestDataFactory.persistStoredFile(entityManager, "file-checksum",
+                    MediaType.IMAGE, "image/jpeg", 10, "/uploads/file-checksum");
+            TestDataFactory.persistMediaAsset(entityManager, owner, file, "file.jpg");
+
+            List<StoredFile> found = repository.findOrphaned();
+
+            assertThat(found).isEmpty();
+        }
+
+        @Test
+        void shouldFindOnlyOrphaned_whenMixOfOrphanedAndUsedFiles() {
+            User owner = TestDataFactory.persistUser(entityManager, "owner@test.com", "owner", "hashedPassword");
+
+            StoredFile used = TestDataFactory.persistStoredFile(entityManager, "used-checksum",
+                    MediaType.IMAGE, "image/jpeg", 10, "/uploads/used-checksum");
+            TestDataFactory.persistMediaAsset(entityManager, owner, used, "used.jpg");
+
+            StoredFile orphan1 = TestDataFactory.persistStoredFile(entityManager, "orphan1-checksum",
+                    MediaType.IMAGE, "image/jpeg", 10, "/uploads/orphan1-checksum");
+            StoredFile orphan2 = TestDataFactory.persistStoredFile(entityManager, "orphan2-checksum",
+                    MediaType.VIDEO, "video/mp4", 100, "/uploads/orphan2-checksum");
+
+            List<StoredFile> found = repository.findOrphaned();
+
+            assertThat(found).containsExactlyInAnyOrder(orphan1, orphan2);
+        }
+
+        @Test
+        void shouldNotFindOrphaned_whenStoredFileWasOrphanedThenGotMediaAsset() {
+            User owner = TestDataFactory.persistUser(entityManager, "owner@test.com", "owner", "hashedPassword");
+            StoredFile file = TestDataFactory.persistStoredFile(entityManager, "file-checksum",
+                    MediaType.IMAGE, "image/jpeg", 10, "/uploads/file-checksum");
+
+            TestDataFactory.persistMediaAsset(entityManager, owner, file, "file.jpg");
+
+            List<StoredFile> found = repository.findOrphaned();
+
+            assertThat(found).doesNotContain(file);
+        }
+
+        @Test
+        void shouldFindOrphaned_whenNoStoredFileAtAll() {
+            List<StoredFile> found = repository.findOrphaned();
+
+            assertThat(found).isEmpty();
+        }
+    }
 }
