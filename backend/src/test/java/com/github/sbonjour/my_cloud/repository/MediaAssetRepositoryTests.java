@@ -19,7 +19,7 @@ import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
 
 @DataJpaTest
-class MediaAssetsRepositoryTests extends AbstractPostgresContainerTest {
+class MediaAssetRepositoryTests extends AbstractPostgresContainerTest {
 
         @Autowired
         MediaAssetRepository repository;
@@ -267,7 +267,7 @@ class MediaAssetsRepositoryTests extends AbstractPostgresContainerTest {
         }
 
         @Nested
-        class ShouldGetTotalUserStorageUsed {
+        class GetTotalUserStorageUsed {
                 User owner;
                 long storedFileSize = 10;
                 StoredFile file1;
