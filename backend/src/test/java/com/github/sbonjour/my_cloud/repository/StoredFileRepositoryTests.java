@@ -15,6 +15,7 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import com.github.sbonjour.my_cloud.TestDataFactory;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
+import com.github.sbonjour.my_cloud.entity.User;
 
 @DataJpaTest
 public class StoredFileRepositoryTests extends AbstractPostgresContainerTest {
@@ -32,7 +33,8 @@ public class StoredFileRepositoryTests extends AbstractPostgresContainerTest {
 
         @BeforeEach
         void setUp() {
-            file1 = TestDataFactory.persistStoredFile(entityManager, file1Checksum, MediaType.IMAGE, "file1MimeType", 10,
+            file1 = TestDataFactory.persistStoredFile(entityManager, file1Checksum, MediaType.IMAGE, "file1MimeType",
+                    10,
                     "/uploads/" + file1Checksum);
         }
 
@@ -50,12 +52,14 @@ public class StoredFileRepositoryTests extends AbstractPostgresContainerTest {
 
             assertThat(found).isEmpty();
         }
+
         @Test
         void shouldNotFindByChecksum_whenChecksumDiffers() {
             Optional<StoredFile> found = repository.findByChecksum("wrong-checksum");
 
             assertThat(found).isEmpty();
         }
+
         @Test
         void shouldNotFindByChecksum_whenChecksumisEmpty() {
             Optional<StoredFile> found = repository.findByChecksum("");
@@ -71,7 +75,8 @@ public class StoredFileRepositoryTests extends AbstractPostgresContainerTest {
 
         @BeforeEach
         void setUp() {
-            file1 = TestDataFactory.persistStoredFile(entityManager, file1Checksum, MediaType.IMAGE, "file1MimeType", 10,
+            file1 = TestDataFactory.persistStoredFile(entityManager, file1Checksum, MediaType.IMAGE, "file1MimeType",
+                    10,
                     "/uploads/" + file1Checksum);
         }
 
@@ -81,6 +86,7 @@ public class StoredFileRepositoryTests extends AbstractPostgresContainerTest {
 
             assertThat(exists).isEqualTo(true);
         }
+
         @Test
         void shouldNotExistsByChecksum() {
             boolean exists = repository.existsByChecksum("wrong-checksum");
@@ -94,45 +100,96 @@ public class StoredFileRepositoryTests extends AbstractPostgresContainerTest {
 
         @Test
         void shouldFindByMediaType_whenMediaTypeIsImage() {
-            StoredFile image1 = TestDataFactory.persistStoredFile(entityManager, "image1Checksum", MediaType.IMAGE, "image1MimType", 10, "/uploads/image1Checksum");
-            StoredFile image2 = TestDataFactory.persistStoredFile(entityManager, "image2Checksum", MediaType.IMAGE, "image2MimType", 10, "/uploads/image2Checksum");
-            TestDataFactory.persistStoredFile(entityManager, "video1Checksum", MediaType.VIDEO, "video1MimType", 10, "/uploads/video1Checksum");
+            StoredFile image1 = TestDataFactory.persistStoredFile(entityManager, "image1Checksum", MediaType.IMAGE,
+                    "image1MimType", 10, "/uploads/image1Checksum");
+            StoredFile image2 = TestDataFactory.persistStoredFile(entityManager, "image2Checksum", MediaType.IMAGE,
+                    "image2MimType", 10, "/uploads/image2Checksum");
+            TestDataFactory.persistStoredFile(entityManager, "video1Checksum", MediaType.VIDEO, "video1MimType", 10,
+                    "/uploads/video1Checksum");
 
             List<StoredFile> found = repository.findByMediaType(MediaType.IMAGE);
 
             assertThat(found).containsExactlyInAnyOrder(image1, image2);
         }
-        
+
         @Test
         void shouldFindByMediaType_whenMediaTypeIsVideo() {
-            TestDataFactory.persistStoredFile(entityManager, "image1Checksum", MediaType.IMAGE, "image1MimType", 10, "/uploads/image1Checksum");
-            TestDataFactory.persistStoredFile(entityManager, "image2Checksum", MediaType.IMAGE, "image2MimType", 10, "/uploads/image2Checksum");
-            StoredFile video1 = TestDataFactory.persistStoredFile(entityManager, "video1Checksum", MediaType.VIDEO, "video1MimType", 10, "/uploads/video1Checksum");
-            StoredFile video2 = TestDataFactory.persistStoredFile(entityManager, "video2Checksum", MediaType.VIDEO, "video2MimType", 10, "/uploads/video2Checksum");
+            TestDataFactory.persistStoredFile(entityManager, "image1Checksum", MediaType.IMAGE, "image1MimType", 10,
+                    "/uploads/image1Checksum");
+            TestDataFactory.persistStoredFile(entityManager, "image2Checksum", MediaType.IMAGE, "image2MimType", 10,
+                    "/uploads/image2Checksum");
+            StoredFile video1 = TestDataFactory.persistStoredFile(entityManager, "video1Checksum", MediaType.VIDEO,
+                    "video1MimType", 10, "/uploads/video1Checksum");
+            StoredFile video2 = TestDataFactory.persistStoredFile(entityManager, "video2Checksum", MediaType.VIDEO,
+                    "video2MimType", 10, "/uploads/video2Checksum");
 
             List<StoredFile> found = repository.findByMediaType(MediaType.VIDEO);
 
             assertThat(found).containsExactlyInAnyOrder(video1, video2);
         }
-        
+
         @Test
         void shouldNotFindByMediaType_whenMediaTypeIsImage() {
-            TestDataFactory.persistStoredFile(entityManager, "video1Checksum", MediaType.VIDEO, "video1MimType", 10, "/uploads/video1Checksum");
-            TestDataFactory.persistStoredFile(entityManager, "video2Checksum", MediaType.VIDEO, "video2MimType", 10, "/uploads/video2Checksum");
+            TestDataFactory.persistStoredFile(entityManager, "video1Checksum", MediaType.VIDEO, "video1MimType", 10,
+                    "/uploads/video1Checksum");
+            TestDataFactory.persistStoredFile(entityManager, "video2Checksum", MediaType.VIDEO, "video2MimType", 10,
+                    "/uploads/video2Checksum");
 
             List<StoredFile> found = repository.findByMediaType(MediaType.IMAGE);
 
             assertThat(found).isEmpty();
         }
-        
+
         @Test
         void shouldNotFindByMediaType_whenMediaTypeIsVideo() {
-            TestDataFactory.persistStoredFile(entityManager, "image1Checksum", MediaType.IMAGE, "image1MimType", 10, "/uploads/image1Checksum");
-            TestDataFactory.persistStoredFile(entityManager, "image2Checksum", MediaType.IMAGE, "image2MimType", 10, "/uploads/image2Checksum");
+            TestDataFactory.persistStoredFile(entityManager, "image1Checksum", MediaType.IMAGE, "image1MimType", 10,
+                    "/uploads/image1Checksum");
+            TestDataFactory.persistStoredFile(entityManager, "image2Checksum", MediaType.IMAGE, "image2MimType", 10,
+                    "/uploads/image2Checksum");
 
             List<StoredFile> found = repository.findByMediaType(MediaType.VIDEO);
 
             assertThat(found).isEmpty();
         }
     }
+
+    @Nested
+    class GetTotalStorageUsed {
+        @Test
+        void shouldGetTotalStorageUsed_whenNoFile() {
+            long found = repository.getTotalStorageUsed();
+
+            assertThat(found).isEqualTo(0);
+        }
+
+        @Test
+        void shouldGetTotalStorageUsed_whenOneFile() {
+            long image1Size = 1032;
+            TestDataFactory.persistStoredFile(entityManager, "image1Checksum", MediaType.IMAGE, "image1MimType",
+                    image1Size, "/uploads/image1Checksum");
+            long found = repository.getTotalStorageUsed();
+
+            assertThat(found).isEqualTo(image1Size);
+        }
+
+        @Test
+        void shouldGetTotalStorageUsed_whenMultipleFiles() {
+            long image1Size = 1032032L;
+            TestDataFactory.persistStoredFile(entityManager, "image1Checksum", MediaType.IMAGE, "image1MimType",
+                    image1Size, "/uploads/image1Checksum");
+            long image2Size = 320302L;
+            TestDataFactory.persistStoredFile(entityManager, "image2Checksum", MediaType.IMAGE, "image2MimType",
+                    image2Size, "/uploads/image2Checksum");
+            long video1Size = 3230302012L;
+            TestDataFactory.persistStoredFile(entityManager, "video1Checksum", MediaType.VIDEO, "video1MimType",
+                    video1Size, "/uploads/video1Checksum");
+            long video2Size = 80302012L;
+            TestDataFactory.persistStoredFile(entityManager, "video2Checksum", MediaType.VIDEO, "video2MimType",
+                    video2Size, "/uploads/video2Checksum");
+            long found = repository.getTotalStorageUsed();
+
+            assertThat(found).isEqualTo(image1Size + image2Size + video1Size + video2Size);
+        }
+    }
+
 }
