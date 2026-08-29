@@ -36,6 +36,7 @@ public class MediaAssetService {
     private final MediaAssetRepository mediaAssetRepository;
     private final StoredFileRepository storedFileRepository;
     private final RabbitTemplate rabbitTemplate;
+    private final FileStoreService fileStoreService;
 
     @Value("${file.storage.path:/app/uploads}")
     private String uploadPath;
@@ -88,24 +89,16 @@ public class MediaAssetService {
             throw new ConflictException("A media asset with the same file already exists for this user");
         }
 
-        if (sf == null) {
+        if(sf == null) {
             String storagePath = uploadPath + "/" + checksum;
             try {
-                file.transferTo(new java.io.File(storagePath));
+                sf = fileStoreService.write(file, storagePath, checksum, getMediaType(file));
             } catch (IOException e) {
                 throw new InternalServerErrorException("Error while saving the file");
             }
 
-            sf = StoredFile.builder()
-                    .checksum(checksum)
-                    .storagePath(storagePath)
-                    .mimeType(file.getContentType())
-                    .sizeBytes(file.getSize())
-                    .mediaType(getMediaType(file))
-                    .build();
-            sf = storedFileRepository.save(sf);
         }
-
+            sf = storedFileRepository.save(sf);
         MediaAsset mediaAsset = MediaAsset.builder()
                 .owner(owner)
                 .filename(file.getOriginalFilename())
