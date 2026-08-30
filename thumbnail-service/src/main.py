@@ -1,7 +1,7 @@
 import json
 import os
 import time
-import pika
+import pika # pyright: ignore[reportMissingModuleSource]
 import requests
 from PIL import Image
 
@@ -59,15 +59,17 @@ def notify_backend(media_asset_id: str):
     response.raise_for_status()
 
 
-def on_message(channel, method, body):
+def on_message(channel, method, _ ,body):
     message = json.loads(body)
     media_asset_id = message["mediaAssetId"]
     storage_path = message["storagePath"]
+    directory = os.path.dirname(storage_path)
+    thumbnail_path = os.path.join(directory, "thumbnail", os.path.basename(storage_path))
 
 
 
     try:
-        if os.path.exists(storage_path):
+        if os.path.exists(thumbnail_path):
             print(f"Thumbnail déjà existant pour : {media_asset_id} ({storage_path})")
             notify_backend(media_asset_id)
             print(f"Backend notifié pour {media_asset_id}")
