@@ -94,6 +94,18 @@ public class MediaAssetController {
                 .body(file);
     }
 
+    @GetMapping("/media/{id}/thumbnail")
+    public ResponseEntity<Resource> getMediaAssetThumbnail(@PathVariable("id") UUID id, @AuthenticationPrincipal User user) {
+        MediaAsset mediaAsset = mediaAssetService.getMediaAsset(id, user);
+
+        Resource file = new FileSystemResource(mediaAsset.getStoredFile().getThumbnailPath());
+
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.parseMediaType("image/webp"))
+                .body(file);
+    }
+
     /**
      * Retrieves the metadata for a given media asset ID.
      *
