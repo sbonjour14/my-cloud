@@ -28,9 +28,8 @@ export type UserResponse = {
 }
 
 export type MediaAssetResponse = {
-  id: string,
   filename: string,
   url: string
-  mediaType: string,
+  thumbnailUrl: string,
   createdAt: string,
 }
