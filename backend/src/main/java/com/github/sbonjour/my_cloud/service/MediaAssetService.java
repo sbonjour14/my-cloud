@@ -3,8 +3,6 @@ package com.github.sbonjour.my_cloud.service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -54,21 +52,6 @@ public class MediaAssetService {
             throw new InvalidFileTypeException("File type is not supported");
     }
 
-    private String calculateChecksum(byte[] fileBytes) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(fileBytes);
-
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new InternalServerErrorException("Algorithme SHA-256 not found");
-        }
-
-    }
 
     public MediaAsset uploadFile(MultipartFile file, User owner) {
         byte[] bytes;
@@ -81,7 +64,7 @@ public class MediaAssetService {
         if (mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename()).isPresent()) {
             throw new ConflictException("A media asset with the same name already exists for this user");
         }
-        String checksum = calculateChecksum(bytes);
+        String checksum = fileStoreService.calculateChecksum(bytes);
 
         StoredFile sf = storedFileRepository.findByChecksum(checksum).orElse(null);
 
@@ -92,13 +75,12 @@ public class MediaAssetService {
         if(sf == null) {
             String storagePath = uploadPath + "/" + checksum;
             try {
-                sf = fileStoreService.write(file, storagePath, checksum, getMediaType(file));
+                sf = storedFileRepository.save(fileStoreService.write(file, storagePath, checksum, getMediaType(file)));
             } catch (IOException e) {
                 throw new InternalServerErrorException("Error while saving the file");
             }
 
         }
-            sf = storedFileRepository.save(sf);
         MediaAsset mediaAsset = MediaAsset.builder()
                 .owner(owner)
                 .filename(file.getOriginalFilename())
