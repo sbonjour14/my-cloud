@@ -8,7 +8,12 @@ export const mediaAssetsKeys = {
 export function useMediaAssets() {
     return useQuery({
         queryFn: getMediaAssets,
-        queryKey: mediaAssetsKeys.all
+        queryKey: mediaAssetsKeys.all,
+        refetchInterval: (query) => {
+            const data = query.state.data;
+            const hasPending = data?.some((asset) => !asset.hasThumbnail);
+            return hasPending ? 2000 : false;
+        }
     })
 }
 
