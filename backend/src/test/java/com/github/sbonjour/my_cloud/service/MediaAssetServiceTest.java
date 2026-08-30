@@ -5,10 +5,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,9 +24,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,6 +39,7 @@ import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
 import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
+import com.github.sbonjour.my_cloud.exception.NotFoundException;
 import com.github.sbonjour.my_cloud.repository.MediaAssetRepository;
 import com.github.sbonjour.my_cloud.repository.StoredFileRepository;
 
@@ -110,7 +118,8 @@ public class MediaAssetServiceTest {
             sf.setHasThumbnail(false); // file is new so no thumbnail
 
             when(storedFileRepository.findByChecksum(sf.getChecksum())).thenReturn(Optional.empty());
-            when(storedFileRepository.save(any(StoredFile.class))).thenAnswer(invocation -> invocation.<StoredFile>getArgument(0));
+            when(storedFileRepository.save(any(StoredFile.class)))
+                    .thenAnswer(invocation -> invocation.<StoredFile>getArgument(0));
 
             when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(any(), any())).thenReturn(Optional.empty());
 
@@ -140,8 +149,8 @@ public class MediaAssetServiceTest {
 
             MediaAsset result = service.uploadFile(file, owner);
 
-
-            verify(fileStoreService).write(file, uploadPath + "/" + sf.getChecksum(), sf.getChecksum(), sf.getMediaType());
+            verify(fileStoreService).write(file, uploadPath + "/" + sf.getChecksum(), sf.getChecksum(),
+                    sf.getMediaType());
             verify(mediaAssetRepository).save(any(MediaAsset.class));
             verify(storedFileRepository).save(any(StoredFile.class));
             verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.THUMBNAIL_QUEUE), any(Map.class));
@@ -168,13 +177,14 @@ public class MediaAssetServiceTest {
                     .id(UUID.randomUUID())
                     .build();
 
-            when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename())).thenReturn(Optional.of(existing));
+            when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename()))
+                    .thenReturn(Optional.of(existing));
 
             assertThatThrownBy(() -> service.uploadFile(file, owner))
-            .isInstanceOf(ConflictException.class)
-            .hasMessage("A media asset with the same name already exists for this user");
+                    .isInstanceOf(ConflictException.class)
+                    .hasMessage("A media asset with the same name already exists for this user");
         }
-        
+
         @Test
         void shouldNotUpload_whenHasSameStoredFile() {
             MultipartFile file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", new byte[10]);
@@ -186,22 +196,24 @@ public class MediaAssetServiceTest {
                     .id(UUID.randomUUID())
                     .build();
 
-            when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename())).thenReturn(Optional.empty());
+            when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename()))
+                    .thenReturn(Optional.empty());
             when(mediaAssetRepository.findByOwnerAndStoredFile(owner, sf)).thenReturn(Optional.of(existing));
 
             when(fileStoreService.calculateChecksum(any())).thenReturn(sf.getChecksum());
             when(storedFileRepository.findByChecksum(anyString())).thenReturn(Optional.of(sf));
 
             assertThatThrownBy(() -> service.uploadFile(file, owner))
-            .isInstanceOf(ConflictException.class)
-            .hasMessage("A media asset with the same file already exists for this user");
+                    .isInstanceOf(ConflictException.class)
+                    .hasMessage("A media asset with the same file already exists for this user");
         }
-        
+
         @Test
-        void shouldNotUpload_whenErrorSavingFile() throws Exception{
+        void shouldNotUpload_whenErrorSavingFile() throws Exception {
             MultipartFile file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", new byte[10]);
 
-            when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename())).thenReturn(Optional.empty());
+            when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename()))
+                    .thenReturn(Optional.empty());
 
             when(fileStoreService.calculateChecksum(any())).thenReturn(sf.getChecksum());
             when(storedFileRepository.findByChecksum(anyString())).thenReturn(Optional.empty());
@@ -209,9 +221,121 @@ public class MediaAssetServiceTest {
             when(fileStoreService.write(any(), any(), any(), any())).thenThrow(new IOException("disk full"));
 
             assertThatThrownBy(() -> service.uploadFile(file, owner))
-            .isInstanceOf(InternalServerErrorException.class);
+                    .isInstanceOf(InternalServerErrorException.class);
         }
     }
 
+    @Nested
+    class DeleteMediaAsset {
+
+        User owner;
+        StoredFile sf;
+        MediaAsset mediaAsset;
+
+        @BeforeEach
+        void setUp() {
+            owner = User.builder()
+                    .displayName("test")
+                    .email("test@example.com")
+                    .id(UUID.randomUUID())
+                    .build();
+
+            sf = StoredFile.builder()
+                    .checksum("checksum")
+                    .storagePath("../images/checksum")
+                    .hasThumbnail(true)
+                    .mediaType(MediaType.IMAGE)
+                    .mimeType("image/jpeg")
+                    .sizeBytes(100)
+                    .id(UUID.randomUUID())
+                    .build();
+
+            mediaAsset = MediaAsset.builder()
+                    .owner(owner)
+                    .filename("test.jpg")
+                    .storedFile(sf)
+                    .id(UUID.randomUUID())
+                    .build();
+        }
+
+        @Test
+        void shouldThrow_whenMediaAssetNotFound() {
+            when(mediaAssetRepository.findById(mediaAsset.getId())).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.deleteMediaAsset(mediaAsset.getId(), owner))
+                    .isInstanceOf(NotFoundException.class)
+                    .hasMessage("Media asset not found");
+
+            verify(mediaAssetRepository, never()).delete(any());
+        }
+
+        @Test
+        void shouldThrow_whenUserIsNotOwner() {
+            User otherUser = User.builder()
+                    .displayName("other")
+                    .email("other@example.com")
+                    .id(UUID.randomUUID())
+                    .build();
+
+            when(mediaAssetRepository.findById(mediaAsset.getId())).thenReturn(Optional.of(mediaAsset));
+
+            assertThatThrownBy(() -> service.deleteMediaAsset(mediaAsset.getId(), otherUser))
+                    .isInstanceOf(AccessDeniedException.class)
+                    .hasMessage("You don't have access to this media asset");
+
+            verify(mediaAssetRepository, never()).delete(any());
+        }
+
+        @Test
+        void shouldDeleteMediaAssetAndStoredFile_whenNoOtherReferencesExist() {
+            when(mediaAssetRepository.findById(mediaAsset.getId())).thenReturn(Optional.of(mediaAsset));
+            when(mediaAssetRepository.findByStoredFile(sf)).thenReturn(List.of());
+
+            try (MockedStatic<Files> filesMock = mockStatic(Files.class)) {
+                filesMock.when(() -> Files.deleteIfExists(Path.of(sf.getStoragePath()))).thenReturn(true);
+
+                service.deleteMediaAsset(mediaAsset.getId(), owner);
+
+                verify(mediaAssetRepository).delete(mediaAsset);
+                verify(storedFileRepository).delete(sf);
+                filesMock.verify(() -> Files.deleteIfExists(Path.of(sf.getStoragePath())));
+            }
+        }
+
+        @Test
+        void shouldDeleteMediaAssetOnly_whenOtherReferencesExist() {
+            MediaAsset otherMediaAsset = MediaAsset.builder()
+                    .owner(owner)
+                    .filename("other.jpg")
+                    .storedFile(sf)
+                    .id(UUID.randomUUID())
+                    .build();
+
+            when(mediaAssetRepository.findById(mediaAsset.getId())).thenReturn(Optional.of(mediaAsset));
+            when(mediaAssetRepository.findByStoredFile(sf)).thenReturn(List.of(otherMediaAsset));
+
+            service.deleteMediaAsset(mediaAsset.getId(), owner);
+
+            verify(mediaAssetRepository).delete(mediaAsset);
+            verify(storedFileRepository, never()).delete(any());
+        }
+
+        @Test
+        void shouldThrow_whenFileDeletionFails() {
+            when(mediaAssetRepository.findById(mediaAsset.getId())).thenReturn(Optional.of(mediaAsset));
+            when(mediaAssetRepository.findByStoredFile(sf)).thenReturn(List.of());
+
+            try (MockedStatic<Files> filesMock = mockStatic(Files.class)) {
+                filesMock.when(() -> Files.deleteIfExists(Path.of(sf.getStoragePath())))
+                        .thenThrow(new IOException("disk error"));
+
+                assertThatThrownBy(() -> service.deleteMediaAsset(mediaAsset.getId(), owner))
+                        .isInstanceOf(InternalServerErrorException.class)
+                        .hasMessage("Error while deleting the file");
+
+                verify(storedFileRepository, never()).delete(any());
+            }
+        }
+    }
 
 }
