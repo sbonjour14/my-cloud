@@ -9,6 +9,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { CloudIcon } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { useStorageUsage } from "@/hooks/useStorageUsage";
+import { Image } from "lucide-react";
 
 export function TestPage() {
     const navigate = useNavigate();
@@ -80,12 +81,19 @@ export function TestPage() {
 
                     :
                         <div className="mt-5 grid grid-cols-2 gap-3">
-                            {mediaAssets.map(ma => (
-                                <div key={ma.id}>
-                                    <img
-                                        src={import.meta.env.VITE_API_URL + ma.url}
-                                        className="h-40 w-40 object-cover"
-                                    />
+                            {mediaAssets.map((ma, idx) => (
+                                <div key={idx}>
+                                    {
+                                        ma.hasThumbnail ?
+                                        <img
+                                            src={import.meta.env.VITE_API_URL + ma.thumbnailUrl}
+                                            className="h-40 w-40 object-cover"
+                                        />
+                                        :
+                                            <div className="h-40 w-40 rounded-lg bg-muted animate-pulse flex items-center justify-center">
+                                                <Image className="h-10 w-10 text-muted-foreground/40" strokeWidth={1.5} />
+                                            </div>
+                                    }
                                 </div>
                             ))}
                         </div>
