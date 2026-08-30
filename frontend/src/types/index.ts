@@ -32,4 +32,5 @@ export type MediaAssetResponse = {
   url: string
   thumbnailUrl: string,
   createdAt: string,
+  hasThumbnail: boolean,
 }

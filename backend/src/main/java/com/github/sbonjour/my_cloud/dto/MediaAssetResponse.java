@@ -6,14 +6,16 @@ public record MediaAssetResponse(
     String filename,
     String url,
     String thumbnailUrl,
-    Instant createdAt
+    Instant createdAt,
+    boolean hasThumbnail
 ) {
     public static MediaAssetResponse fromEntity(com.github.sbonjour.my_cloud.entity.MediaAsset mediaAsset) {
         return new MediaAssetResponse(
             mediaAsset.getFilename(),
             "/media/" + mediaAsset.getId(),
             "/media/" + mediaAsset.getId() + "/thumbnail",
-            mediaAsset.getCreatedAt()
+            mediaAsset.getCreatedAt(),
+            mediaAsset.getStoredFile().isHasThumbnail()
         );
     }
     
