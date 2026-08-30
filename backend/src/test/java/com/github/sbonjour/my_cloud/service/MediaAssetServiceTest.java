@@ -1,11 +1,14 @@
 package com.github.sbonjour.my_cloud.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +30,8 @@ import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
+import com.github.sbonjour.my_cloud.exception.ConflictException;
+import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
 import com.github.sbonjour.my_cloud.repository.MediaAssetRepository;
 import com.github.sbonjour.my_cloud.repository.StoredFileRepository;
 
@@ -150,8 +155,63 @@ public class MediaAssetServiceTest {
             assertThat(result.getStoredFile().getMediaType()).isEqualTo(sf.getMediaType());
             assertThat(result.getStoredFile().getMimeType()).isEqualTo(sf.getMimeType());
             assertThat(result.getStoredFile().isHasThumbnail()).isEqualTo(sf.isHasThumbnail());
+        }
 
+        @Test
+        void shouldNotUpload_whenHasSameMediaAsset() {
+            MultipartFile file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", new byte[10]);
+
+            MediaAsset existing = MediaAsset.builder()
+                    .owner(owner)
+                    .filename(file.getOriginalFilename())
+                    .storedFile(sf)
+                    .id(UUID.randomUUID())
+                    .build();
+
+            when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename())).thenReturn(Optional.of(existing));
+
+            assertThatThrownBy(() -> service.uploadFile(file, owner))
+            .isInstanceOf(ConflictException.class)
+            .hasMessage("A media asset with the same name already exists for this user");
+        }
+        
+        @Test
+        void shouldNotUpload_whenHasSameStoredFile() {
+            MultipartFile file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", new byte[10]);
+
+            MediaAsset existing = MediaAsset.builder()
+                    .owner(owner)
+                    .filename(file.getOriginalFilename())
+                    .storedFile(sf)
+                    .id(UUID.randomUUID())
+                    .build();
+
+            when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename())).thenReturn(Optional.empty());
+            when(mediaAssetRepository.findByOwnerAndStoredFile(owner, sf)).thenReturn(Optional.of(existing));
+
+            when(fileStoreService.calculateChecksum(any())).thenReturn(sf.getChecksum());
+            when(storedFileRepository.findByChecksum(anyString())).thenReturn(Optional.of(sf));
+
+            assertThatThrownBy(() -> service.uploadFile(file, owner))
+            .isInstanceOf(ConflictException.class)
+            .hasMessage("A media asset with the same file already exists for this user");
+        }
+        
+        @Test
+        void shouldNotUpload_whenErrorSavingFile() throws Exception{
+            MultipartFile file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", new byte[10]);
+
+            when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename())).thenReturn(Optional.empty());
+
+            when(fileStoreService.calculateChecksum(any())).thenReturn(sf.getChecksum());
+            when(storedFileRepository.findByChecksum(anyString())).thenReturn(Optional.empty());
+
+            when(fileStoreService.write(any(), any(), any(), any())).thenThrow(new IOException("disk full"));
+
+            assertThatThrownBy(() -> service.uploadFile(file, owner))
+            .isInstanceOf(InternalServerErrorException.class);
         }
     }
+
 
 }
