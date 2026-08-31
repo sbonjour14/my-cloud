@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,13 +39,13 @@ public class MediaAssetController {
      *
      * @param file the uploaded file
      * @param user the authenticated user (injected by Spring Security)
-     * @return 200 OK with the created MediaAssetResponse
+     * @return 201 OK with the created MediaAssetResponse
      */
 
     @PostMapping("/mediaAssets")
     public ResponseEntity<MediaAssetResponse> uploadMediaAsset(@RequestParam("file") MultipartFile file, @AuthenticationPrincipal User user) {
         MediaAsset mediaAsset = mediaAssetService.uploadFile(file, user);
-        return ResponseEntity.ok(MediaAssetResponse.fromEntity(mediaAsset));
+        return ResponseEntity.status(HttpStatus.CREATED).body(MediaAssetResponse.fromEntity(mediaAsset));
     }
 
     /**
