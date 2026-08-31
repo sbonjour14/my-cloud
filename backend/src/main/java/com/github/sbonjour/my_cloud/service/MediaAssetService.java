@@ -97,7 +97,8 @@ public class MediaAssetService {
     private void publishThumbnailGenerationMessage(MediaAsset mediaAsset) {
         Map<String, String> message = Map.of(
                 "mediaAssetId", mediaAsset.getId().toString(),
-                "storagePath", mediaAsset.getStoredFile().getStoragePath());
+                "storagePath", mediaAsset.getStoredFile().getStoragePath(),
+                "mediaType", mediaAsset.getStoredFile().getMediaType().toString());
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.THUMBNAIL_QUEUE, message);
     }

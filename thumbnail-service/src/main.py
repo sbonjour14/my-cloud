@@ -3,6 +3,7 @@ import os
 import time
 import pika # pyright: ignore[reportMissingModuleSource]
 import requests
+import cv2  # pyright: ignore[reportMissingImports]
 from PIL import Image
 
 RABBITMQ_HOST = os.environ["RABBITMQ_HOST"]
@@ -36,7 +37,7 @@ def connect_to_rabbitmq(max_retries=10, delay_seconds=3):
     raise RuntimeError("Impossible de se connecter à RabbitMQ après plusieurs tentatives")
 
 
-def generate_thumbnail(original_path: str) -> str:
+def generate_thumbnail_of_image(original_path: str) -> str:
     directory = os.path.dirname(original_path)
     thumbnail_dir = os.path.join(directory, "thumbnail")
     os.makedirs(thumbnail_dir, exist_ok=True)
@@ -50,6 +51,40 @@ def generate_thumbnail(original_path: str) -> str:
 
     return thumbnail_path
 
+def generate_thumbnail_of_video(original_path: str) -> str:
+    print(f"[VIDEO] Début de l'extraction de la première frame pour : {original_path}")
+    
+    cap = cv2.VideoCapture(original_path)
+    if not cap.isOpened():
+        raise RuntimeError(f"[VIDEO] Impossible d'ouvrir la vidéo : {original_path}")
+
+    try:
+        success, frame = cap.read()
+        if not success or frame is None:
+            raise RuntimeError(f"[VIDEO] Impossible de lire la première frame de la vidéo : {original_path}")
+        
+        print("[VIDEO] Première frame lue avec succès par OpenCV.")
+
+        directory = os.path.dirname(original_path)
+        thumbnail_dir = os.path.join(directory, "thumbnail")
+        os.makedirs(thumbnail_dir, exist_ok=True)
+
+        filename = os.path.basename(original_path)
+        thumbnail_path = os.path.join(thumbnail_dir,filename)
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        img = Image.fromarray(frame_rgb)
+        img.thumbnail(THUMBNAIL_SIZE)
+        img.save(thumbnail_path, "WEBP")
+        
+        print(f"[VIDEO] Miniature générée avec succès : {thumbnail_path}")
+
+    finally:
+        cap.release()
+        print("[VIDEO] Ressource vidéo (VideoCapture) libérée.")
+
+    return thumbnail_path
 
 def notify_backend(media_asset_id: str):
     url = f"{BACKEND_URL}/media/{media_asset_id}/thumbnail-ready"
@@ -63,6 +98,7 @@ def on_message(channel, method, _ ,body):
     message = json.loads(body)
     media_asset_id = message["mediaAssetId"]
     storage_path = message["storagePath"]
+    media_type = message["mediaType"]
     directory = os.path.dirname(storage_path)
     thumbnail_path = os.path.join(directory, "thumbnail", os.path.basename(storage_path))
 
@@ -77,7 +113,10 @@ def on_message(channel, method, _ ,body):
             return
 
         print(f"Traitement de {media_asset_id} ({storage_path})")
-        thumbnail_path = generate_thumbnail(storage_path)
+        if media_type == "IMAGE":
+            thumbnail_path = generate_thumbnail_of_image(storage_path)
+        if media_type == "VIDEO":
+            thumbnail_path = generate_thumbnail_of_video(storage_path)
         print(f"Miniature créée : {thumbnail_path}")
 
         notify_backend(media_asset_id)
