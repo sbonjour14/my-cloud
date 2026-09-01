@@ -50,20 +50,20 @@ public class StoredFile {
     private boolean hasThumbnail;
 
     @Column(nullable = false)
-    private String mimeType;
+    private String mediaType;
 
     @Column(nullable = false)
     private long sizeBytes;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MediaType mediaType;
+    private FileType fileType;
 
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();
 
-    public enum MediaType {
+    public enum FileType {
         IMAGE, VIDEO
     }
 

@@ -9,13 +9,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.github.sbonjour.my_cloud.entity.StoredFile;
-import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
+import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
 
 @Service
 public class FileStoreService {
 
-    public StoredFile write(MultipartFile file, String storagePath, String checksum, MediaType mediaType)
+    public StoredFile write(MultipartFile file, String storagePath, String checksum, FileType mediaType)
             throws IOException {
 
         file.transferTo(new java.io.File(storagePath));
@@ -23,9 +23,9 @@ public class FileStoreService {
         StoredFile sf = StoredFile.builder()
                 .checksum(checksum)
                 .storagePath(storagePath)
-                .mimeType(file.getContentType())
+                .mediaType(file.getContentType())
                 .sizeBytes(file.getSize())
-                .mediaType(mediaType)
+                .fileType(mediaType)
                 .build();
         return sf;
 

@@ -17,7 +17,7 @@ import com.github.sbonjour.my_cloud.config.RabbitMQConfig;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
-import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
+import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
 import com.github.sbonjour.my_cloud.exception.InvalidFileTypeException;
@@ -39,15 +39,15 @@ public class MediaAssetService {
     @Value("${file.storage.path:/app/uploads}")
     private String uploadPath;
 
-    private MediaType getMediaType(MultipartFile file) {
+    private FileType getMediaType(MultipartFile file) {
         String contentType = file.getContentType();
         if (contentType == null)
             throw new InvalidFileTypeException("File type is not supported");
 
         if (contentType.startsWith("image"))
-            return MediaType.IMAGE;
+            return FileType.IMAGE;
         else if (contentType.startsWith("video"))
-            return MediaType.VIDEO;
+            return FileType.VIDEO;
         else
             throw new InvalidFileTypeException("File type is not supported");
     }

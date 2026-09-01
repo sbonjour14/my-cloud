@@ -59,8 +59,8 @@ public class MediaAssetControllerTest extends AbstractControllerTest {
                     .checksum("checksum")
                     .storagePath("/uploads/checksum")
                     .hasThumbnail(false)
-                    .mediaType(StoredFile.MediaType.IMAGE)
-                    .mimeType("image/jpeg")
+                    .fileType(StoredFile.FileType.IMAGE)
+                    .mediaType("image/jpeg")
                     .sizeBytes(50)
                     .build();
 

@@ -17,7 +17,7 @@ import com.github.sbonjour.my_cloud.TestDataFactory;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
-import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
+import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 
 @DataJpaTest
 class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
@@ -40,7 +40,7 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                         otherOwner = TestDataFactory.persistUser(entityManager, "other@example.com", "other",
                                         "password2");
                         file = TestDataFactory.persistStoredFile(entityManager, "file-checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file-mime-type", 10, "file.jpg");
 
                 }
@@ -82,10 +82,10 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                                         "password2");
 
                         file = TestDataFactory.persistStoredFile(entityManager, "file-checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file-mime-type", 10, "file.jpg");
                         otherFile = TestDataFactory.persistStoredFile(entityManager, "other-file-checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "other-file-mime-type", 10, "other-file.jpg");
                 }
 
@@ -145,7 +145,7 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                                         "hashedPassword");
 
                         file1 = TestDataFactory.persistStoredFile(entityManager, "file1Checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file1MimeType", 10, "/uploads/file1Checksum");
 
                 }
@@ -153,7 +153,7 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                 @Test
                 void shouldFindByOwnerAndStoredFile_whenOwnerHasMultipleMediaAssets() {
                         StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2Checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file2MimeType", 100, "/uploads/file2Checksum");
 
                         MediaAsset mediaAsset1 = TestDataFactory.persistMediaAsset(entityManager, owner, file1,
@@ -193,7 +193,7 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                                         "otherHashedPassword");
 
                         StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2Checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file2MimeType", 10, "/uploads/file2Checksum");
 
                         TestDataFactory.persistMediaAsset(entityManager, otherOwner, file1, "file1.jpg");
@@ -207,7 +207,7 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                 @Test
                 void shouldNotFindByOwnerAndStoredFile_whenStoredFileDoesntMatch() {
                         StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2Checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file2MimeType", 10, "/uploads/file2Checksum");
 
                         TestDataFactory.persistMediaAsset(entityManager, owner, file1, "file1.jpg");
@@ -229,14 +229,14 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                                         "hashedPassword");
 
                         file1 = TestDataFactory.persistStoredFile(entityManager, "file1Checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file1MimeType", 10, "/uploads/file1Checksum");
                 }
 
                 @Test
                 void shouldFindByStoredFile_whenUsedByOneUser() {
                         StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2Checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file2MimeType", 10, "/uploads/file2Checksum");
 
                         MediaAsset mediaAsset1 = TestDataFactory.persistMediaAsset(entityManager, owner, file1,
@@ -255,7 +255,7 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                                         "hashedPassword");
 
                         StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2Checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file2MimeType", 10, "/uploads/file2Checksum");
 
                         MediaAsset mediaAsset1 = TestDataFactory.persistMediaAsset(entityManager, owner, file1,
@@ -272,7 +272,7 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                 @Test
                 void shouldNotFindByStoredFile() {
                         StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2Checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file2MimeType", 10, "/uploads/file2Checksum");
 
                         TestDataFactory.persistMediaAsset(entityManager, owner, file1, "file1.jpg");
@@ -297,7 +297,7 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
 
                         storedFileSize = 10;
                         file1 = TestDataFactory.persistStoredFile(entityManager, "file1Checksum",
-                                        MediaType.IMAGE,
+                                        FileType.IMAGE,
                                         "file1MimeType", storedFileSize, "/uploads/file1Checksum");
 
                 }
@@ -325,8 +325,8 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                         long storedFile2Size = 234032;
                         long storedFile3Size = 32032;
 
-                        StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2-checksum", MediaType.VIDEO, "file2MimeType", storedFile2Size, "/uploads/file2Checksum");
-                        StoredFile file3 = TestDataFactory.persistStoredFile(entityManager, "file3-checksum", MediaType.VIDEO, "file3MimeType", storedFile3Size, "/uploads/file3Checksum");
+                        StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2-checksum", FileType.VIDEO, "file2MimeType", storedFile2Size, "/uploads/file2Checksum");
+                        StoredFile file3 = TestDataFactory.persistStoredFile(entityManager, "file3-checksum", FileType.VIDEO, "file3MimeType", storedFile3Size, "/uploads/file3Checksum");
 
                         TestDataFactory.persistMediaAsset(entityManager, owner, file1, "file1.jpg");
                         TestDataFactory.persistMediaAsset(entityManager, owner, file2, "file2.jpg");
@@ -345,8 +345,8 @@ class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {
                         long storedFile2Size = 234;
                         long storedFile3Size = 3232;
 
-                        StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2-checksum", MediaType.VIDEO, "file2MimeType", storedFile2Size, "/uploads/file2Checksum");
-                        StoredFile file3 = TestDataFactory.persistStoredFile(entityManager, "file3-checksum", MediaType.VIDEO, "file3MimeType", storedFile3Size, "/uploads/file3Checksum");
+                        StoredFile file2 = TestDataFactory.persistStoredFile(entityManager, "file2-checksum", FileType.VIDEO, "file2MimeType", storedFile2Size, "/uploads/file2Checksum");
+                        StoredFile file3 = TestDataFactory.persistStoredFile(entityManager, "file3-checksum", FileType.VIDEO, "file3MimeType", storedFile3Size, "/uploads/file3Checksum");
 
                         TestDataFactory.persistMediaAsset(entityManager, owner, file1, "file1.jpg");
                         TestDataFactory.persistMediaAsset(entityManager, owner, file2, "file2.jpg");

@@ -91,7 +91,7 @@ public class MediaAssetController {
 
         return ResponseEntity
                 .ok()
-                .contentType(MediaType.parseMediaType(mediaAsset.getStoredFile().getMimeType()))
+                .contentType(MediaType.parseMediaType(mediaAsset.getStoredFile().getMediaType()))
                 .body(file);
     }
 

@@ -14,7 +14,7 @@ public interface StoredFileRepository extends JpaRepository<StoredFile, UUID> {
 
     boolean existsByChecksum(String checksum);
 
-    List<StoredFile> findByMediaType(StoredFile.MediaType mediaType);
+    List<StoredFile> findByFileType(StoredFile.FileType mediaType);
 
     @Query("SELECT COALESCE(SUM(s.sizeBytes), 0) FROM StoredFile s")
     Long getTotalStorageUsed();

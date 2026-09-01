@@ -36,7 +36,7 @@ import com.github.sbonjour.my_cloud.config.RabbitMQConfig;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
-import com.github.sbonjour.my_cloud.entity.StoredFile.MediaType;
+import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
 import com.github.sbonjour.my_cloud.exception.NotFoundException;
@@ -77,8 +77,8 @@ public class MediaAssetServiceTest {
                     .checksum("checksum")
                     .storagePath(uploadPath + "/checksum")
                     .hasThumbnail(true)
-                    .mediaType(MediaType.IMAGE)
-                    .mimeType("image/jpeg")
+                    .fileType(FileType.IMAGE)
+                    .mediaType("image/jpeg")
                     .sizeBytes(100)
                     .id(UUID.randomUUID())
                     .build();
@@ -105,8 +105,8 @@ public class MediaAssetServiceTest {
             assertThat(result.getStoredFile().getChecksum()).isEqualTo(sf.getChecksum());
             assertThat(result.getStoredFile().getSizeBytes()).isEqualTo(sf.getSizeBytes());
             assertThat(result.getStoredFile().getStoragePath()).isEqualTo(sf.getStoragePath());
+            assertThat(result.getStoredFile().getFileType()).isEqualTo(sf.getFileType());
             assertThat(result.getStoredFile().getMediaType()).isEqualTo(sf.getMediaType());
-            assertThat(result.getStoredFile().getMimeType()).isEqualTo(sf.getMimeType());
             assertThat(result.getStoredFile().isHasThumbnail()).isEqualTo(sf.isHasThumbnail());
 
         }
@@ -133,14 +133,14 @@ public class MediaAssetServiceTest {
                 MultipartFile f = invocation.getArgument(0);
                 String storagePath = invocation.getArgument(1);
                 String checksum = invocation.getArgument(2);
-                MediaType mediaType = invocation.getArgument(3);
+                FileType fileType = invocation.getArgument(3);
 
                 return StoredFile.builder()
                         .checksum(checksum)
                         .storagePath(storagePath)
-                        .mimeType(f.getContentType())
+                        .mediaType(f.getContentType())
                         .sizeBytes(f.getSize())
-                        .mediaType(mediaType)
+                        .fileType(fileType)
                         .hasThumbnail(false)
                         .build();
             });
@@ -150,7 +150,7 @@ public class MediaAssetServiceTest {
             MediaAsset result = service.uploadFile(file, owner);
 
             verify(fileStoreService).write(file, uploadPath + "/" + sf.getChecksum(), sf.getChecksum(),
-                    sf.getMediaType());
+                    sf.getFileType());
             verify(mediaAssetRepository).save(any(MediaAsset.class));
             verify(storedFileRepository).save(any(StoredFile.class));
             verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.THUMBNAIL_QUEUE), any(Map.class));
@@ -162,7 +162,7 @@ public class MediaAssetServiceTest {
             assertThat(result.getStoredFile().getSizeBytes()).isEqualTo(sf.getSizeBytes());
             assertThat(result.getStoredFile().getStoragePath()).isEqualTo(sf.getStoragePath());
             assertThat(result.getStoredFile().getMediaType()).isEqualTo(sf.getMediaType());
-            assertThat(result.getStoredFile().getMimeType()).isEqualTo(sf.getMimeType());
+            assertThat(result.getStoredFile().getMediaType()).isEqualTo(sf.getMediaType());
             assertThat(result.getStoredFile().isHasThumbnail()).isEqualTo(sf.isHasThumbnail());
         }
 
@@ -244,8 +244,8 @@ public class MediaAssetServiceTest {
                     .checksum("checksum")
                     .storagePath("../images/checksum")
                     .hasThumbnail(true)
-                    .mediaType(MediaType.IMAGE)
-                    .mimeType("image/jpeg")
+                    .fileType(FileType.IMAGE)
+                    .mediaType("image/jpeg")
                     .sizeBytes(100)
                     .id(UUID.randomUUID())
                     .build();
