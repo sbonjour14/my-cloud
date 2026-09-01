@@ -54,17 +54,10 @@ public class MediaAssetService {
 
 
     public MediaAsset uploadFile(MultipartFile file, User owner) {
-        byte[] bytes;
-        try {
-            bytes = file.getBytes();
-        } catch (IOException e) {
-            throw new InternalServerErrorException("Error while accessing the file");
-        }
-
         if (mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename()).isPresent()) {
             throw new ConflictException("A media asset with the same name already exists for this user");
         }
-        String checksum = fileStoreService.calculateChecksum(bytes);
+        String checksum = fileStoreService.calculateChecksum(file);
 
         StoredFile sf = storedFileRepository.findByChecksum(checksum).orElse(null);
 

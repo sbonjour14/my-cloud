@@ -145,7 +145,7 @@ public class MediaAssetServiceTest {
                         .build();
             });
 
-            when(fileStoreService.calculateChecksum(file.getBytes())).thenReturn(sf.getChecksum());
+            when(fileStoreService.calculateChecksum(file)).thenReturn(sf.getChecksum());
 
             MediaAsset result = service.uploadFile(file, owner);
 
