@@ -39,7 +39,7 @@ public class MediaAssetService {
     @Value("${file.storage.path:/app/uploads}")
     private String uploadPath;
 
-    private FileType getMediaType(MultipartFile file) {
+    private FileType getFileType(MultipartFile file) {
         String contentType = file.getContentType();
         if (contentType == null)
             throw new InvalidFileTypeException("File type is not supported");
@@ -68,7 +68,7 @@ public class MediaAssetService {
         if(sf == null) {
             String storagePath = uploadPath + "/" + checksum;
             try {
-                sf = storedFileRepository.save(fileStoreService.write(file, storagePath, checksum, getMediaType(file)));
+                sf = storedFileRepository.save(fileStoreService.write(file, storagePath, checksum, getFileType(file)));
             } catch (IOException e) {
                 throw new InternalServerErrorException("Error while saving the file");
             }
