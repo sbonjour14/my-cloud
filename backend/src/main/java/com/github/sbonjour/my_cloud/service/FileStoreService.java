@@ -1,6 +1,7 @@
 package com.github.sbonjour.my_cloud.service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -14,7 +15,8 @@ import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
 @Service
 public class FileStoreService {
 
-    public StoredFile write(MultipartFile file, String storagePath, String checksum, MediaType mediaType) throws IOException {
+    public StoredFile write(MultipartFile file, String storagePath, String checksum, MediaType mediaType)
+            throws IOException {
 
         file.transferTo(new java.io.File(storagePath));
 
@@ -29,20 +31,27 @@ public class FileStoreService {
 
     }
 
-
-    public String calculateChecksum(byte[] fileBytes) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(fileBytes);
-
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+    public String calculateChecksum(MultipartFile file) {
+        MessageDigest digest;
+        try (InputStream is = file.getInputStream()) {
+            digest = MessageDigest.getInstance("SHA-256");
+            byte[] buffer = new byte[65536];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
             }
-            return sb.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new InternalServerErrorException("Algorithme SHA-256 not found");
+            throw new InternalServerErrorException("Error Upload the file");
+        } catch (IOException e) {
+            throw new InternalServerErrorException("Error accessing the file");
         }
+        byte[] hash = digest.digest();
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hash) {
+            sb.append(String.format("%02x", b));
+        }
+
+        return sb.toString();
 
     }
 }
