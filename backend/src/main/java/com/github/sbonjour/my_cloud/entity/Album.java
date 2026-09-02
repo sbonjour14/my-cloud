@@ -12,7 +12,6 @@ import java.util.UUID;
 
 /**
  * Represents a photo/video album owned by a single user.
- *
  * An album's name must be unique per owner (a user cannot have two
  * albums with the same name, but different users can reuse names).
  * Albums can be shared with other users via AlbumShare, and contain
