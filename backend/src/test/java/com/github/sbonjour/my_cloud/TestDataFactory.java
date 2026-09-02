@@ -4,6 +4,7 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
+import com.github.sbonjour.my_cloud.entity.UploadSession;
 import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 
@@ -20,11 +21,16 @@ public class TestDataFactory {
         return em.persistAndFlush(user);
     }
 
-    public static StoredFile persistStoredFile(TestEntityManager em, String checksum, FileType fileType, String mimeType, long size, String storagePath) {
+
+    public static UploadSession persistUploadSession(TestEntityManager em, UploadSession us){
+        return  em.persistAndFlush(us);
+    }
+
+    public static StoredFile persistStoredFile(TestEntityManager em, String checksum, FileType fileType, String mediaType, long size, String storagePath) {
         StoredFile file = StoredFile.builder()
         .checksum(checksum)
         .fileType(fileType)
-        .mediaType(mimeType)
+        .mediaType(mediaType)
         .sizeBytes(size)
         .storagePath(storagePath)
         .build();
