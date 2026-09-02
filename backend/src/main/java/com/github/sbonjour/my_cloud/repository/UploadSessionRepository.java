@@ -11,7 +11,7 @@ public interface UploadSessionRepository extends JpaRepository<UploadSession, UU
     
     public Optional<UploadSession> findById(UUID id);
 
-    public boolean existsByChecksum(String checksum);
+    public Optional<UploadSession> findByChecksum(String checksum);
 
     
 }
