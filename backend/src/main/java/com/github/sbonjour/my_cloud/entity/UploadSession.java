@@ -55,9 +55,10 @@ public class UploadSession {
     @Column(nullable = false)
     int totalChunks;
 
-
     @ElementCollection
     Set<Integer> uploadedChunks;
+
+    String checksum;
 
     public enum UploadSessionStatus {
         COMPLETE, UPLOADING, PAUSED
