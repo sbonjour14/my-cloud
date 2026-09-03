@@ -72,6 +72,19 @@ public class MediaAssetService {
         return mediaAsset;
     }
 
+
+    public MediaAsset createMediaAsset(User owner, String filename, StoredFile sf) {
+        MediaAsset ma = mediaAssetRepository.save(MediaAsset.builder()
+            .owner(owner)
+            .filename(filename)
+            .storedFile(sf)
+            .build()
+        );
+        if(!sf.isHasThumbnail())
+            publishThumbnailGenerationMessage(ma);
+        return ma;
+    }
+
     private void publishThumbnailGenerationMessage(MediaAsset mediaAsset) {
         Map<String, String> message = Map.of(
                 "mediaAssetId", mediaAsset.getId().toString(),
@@ -144,6 +157,10 @@ public class MediaAssetService {
 
     public Long getUserMediaAssetSize(User user) {
         return mediaAssetRepository.getUserTotalStorageUsed(user);
+    }
+
+    public MediaAsset findByOwnerAndStoredFile(User owner, StoredFile sf) {
+        return mediaAssetRepository.findByOwnerAndStoredFile(owner, sf).orElse(null);
     }
 
     public void markThumbnailReady(UUID id) {
