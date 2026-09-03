@@ -41,7 +41,6 @@ import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
 import com.github.sbonjour.my_cloud.exception.NotFoundException;
 import com.github.sbonjour.my_cloud.repository.MediaAssetRepository;
-import com.github.sbonjour.my_cloud.repository.StoredFileRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class MediaAssetServiceTest {
@@ -51,13 +50,13 @@ public class MediaAssetServiceTest {
     @Mock
     private MediaAssetRepository mediaAssetRepository;
     @Mock
-    private StoredFileRepository storedFileRepository;
+    private StoredFileService storedFileService;
     @Mock
     private RabbitTemplate rabbitTemplate;
 
     private String uploadPath = "../images";
     @Mock
-    private FileStoreService fileStoreService;
+    private FileService fileService;
 
     @Nested
     class Upload {
@@ -89,7 +88,7 @@ public class MediaAssetServiceTest {
 
             MultipartFile file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", new byte[100]);
 
-            when(storedFileRepository.findByChecksum(any())).thenReturn(Optional.of(sf));
+            when(storedFileService.findByChecksum(any())).thenReturn(sf);
             when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(any(), any())).thenReturn(Optional.empty());
 
             when(mediaAssetRepository.findByOwnerAndStoredFile(owner, sf)).thenReturn(Optional.empty());
@@ -117,8 +116,8 @@ public class MediaAssetServiceTest {
 
             sf.setHasThumbnail(false); // file is new so no thumbnail
 
-            when(storedFileRepository.findByChecksum(sf.getChecksum())).thenReturn(Optional.empty());
-            when(storedFileRepository.save(any(StoredFile.class)))
+            when(storedFileService.findByChecksum(sf.getChecksum())).thenReturn(null);
+            when(storedFileService.save(any(StoredFile.class)))
                     .thenAnswer(invocation -> invocation.<StoredFile>getArgument(0));
 
             when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(any(), any())).thenReturn(Optional.empty());
@@ -129,7 +128,8 @@ public class MediaAssetServiceTest {
                 return ma;
             });
 
-            when(fileStoreService.write(any(), any(), any(), any())).thenAnswer(invocation -> {
+            when(fileService.getFileType(any())).thenReturn(FileType.IMAGE);
+            when(fileService.write(any(), any(), any(), any())).thenAnswer(invocation -> {
                 MultipartFile f = invocation.getArgument(0);
                 String storagePath = invocation.getArgument(1);
                 String checksum = invocation.getArgument(2);
@@ -145,14 +145,14 @@ public class MediaAssetServiceTest {
                         .build();
             });
 
-            when(fileStoreService.calculateChecksum(file)).thenReturn(sf.getChecksum());
+            when(fileService.calculateChecksum(file)).thenReturn(sf.getChecksum());
 
             MediaAsset result = service.uploadFile(file, owner);
 
-            verify(fileStoreService).write(file, uploadPath + "/" + sf.getChecksum(), sf.getChecksum(),
+            verify(fileService).write(file, uploadPath + "/" + sf.getChecksum(), sf.getChecksum(),
                     sf.getFileType());
             verify(mediaAssetRepository).save(any(MediaAsset.class));
-            verify(storedFileRepository).save(any(StoredFile.class));
+            verify(storedFileService).save(any(StoredFile.class));
             verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.THUMBNAIL_QUEUE), any(Map.class));
 
             assertThat(result.getFilename()).isEqualTo(file.getOriginalFilename());
@@ -200,8 +200,8 @@ public class MediaAssetServiceTest {
                     .thenReturn(Optional.empty());
             when(mediaAssetRepository.findByOwnerAndStoredFile(owner, sf)).thenReturn(Optional.of(existing));
 
-            when(fileStoreService.calculateChecksum(any())).thenReturn(sf.getChecksum());
-            when(storedFileRepository.findByChecksum(anyString())).thenReturn(Optional.of(sf));
+            when(fileService.calculateChecksum(any())).thenReturn(sf.getChecksum());
+            when(storedFileService.findByChecksum(anyString())).thenReturn(sf);
 
             assertThatThrownBy(() -> service.uploadFile(file, owner))
                     .isInstanceOf(ConflictException.class)
@@ -215,10 +215,10 @@ public class MediaAssetServiceTest {
             when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename()))
                     .thenReturn(Optional.empty());
 
-            when(fileStoreService.calculateChecksum(any())).thenReturn(sf.getChecksum());
-            when(storedFileRepository.findByChecksum(anyString())).thenReturn(Optional.empty());
+            when(fileService.calculateChecksum(any())).thenReturn(sf.getChecksum());
+            when(storedFileService.findByChecksum(anyString())).thenReturn(null);
 
-            when(fileStoreService.write(any(), any(), any(), any())).thenThrow(new IOException("disk full"));
+            when(fileService.write(any(), any(), any(), any())).thenThrow(new IOException("disk full"));
 
             assertThatThrownBy(() -> service.uploadFile(file, owner))
                     .isInstanceOf(InternalServerErrorException.class);
@@ -297,7 +297,7 @@ public class MediaAssetServiceTest {
                 service.deleteMediaAsset(mediaAsset.getId(), owner);
 
                 verify(mediaAssetRepository).delete(mediaAsset);
-                verify(storedFileRepository).delete(sf);
+                verify(storedFileService).delete(sf);
                 filesMock.verify(() -> Files.deleteIfExists(Path.of(sf.getStoragePath())));
             }
         }
@@ -317,7 +317,7 @@ public class MediaAssetServiceTest {
             service.deleteMediaAsset(mediaAsset.getId(), owner);
 
             verify(mediaAssetRepository).delete(mediaAsset);
-            verify(storedFileRepository, never()).delete(any());
+            verify(storedFileService, never()).delete(any());
         }
 
         @Test
@@ -333,7 +333,7 @@ public class MediaAssetServiceTest {
                         .isInstanceOf(InternalServerErrorException.class)
                         .hasMessage("Error while deleting the file");
 
-                verify(storedFileRepository, never()).delete(any());
+                verify(storedFileService, never()).delete(any());
             }
         }
     }

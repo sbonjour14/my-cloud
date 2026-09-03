@@ -17,13 +17,10 @@ import com.github.sbonjour.my_cloud.config.RabbitMQConfig;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
-import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
-import com.github.sbonjour.my_cloud.exception.InvalidFileTypeException;
 import com.github.sbonjour.my_cloud.exception.NotFoundException;
 import com.github.sbonjour.my_cloud.repository.MediaAssetRepository;
-import com.github.sbonjour.my_cloud.repository.StoredFileRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,34 +29,22 @@ import lombok.RequiredArgsConstructor;
 public class MediaAssetService {
 
     private final MediaAssetRepository mediaAssetRepository;
-    private final StoredFileRepository storedFileRepository;
+    private final StoredFileService storedFileService;
     private final RabbitTemplate rabbitTemplate;
-    private final FileStoreService fileStoreService;
+    private final FileService fileService;
 
     @Value("${file.storage.path:/app/uploads}")
     private String uploadPath;
 
-    private FileType getFileType(MultipartFile file) {
-        String contentType = file.getContentType();
-        if (contentType == null)
-            throw new InvalidFileTypeException("File type is not supported");
-
-        if (contentType.startsWith("image"))
-            return FileType.IMAGE;
-        else if (contentType.startsWith("video"))
-            return FileType.VIDEO;
-        else
-            throw new InvalidFileTypeException("File type is not supported");
-    }
 
 
     public MediaAsset uploadFile(MultipartFile file, User owner) {
         if (mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename()).isPresent()) {
             throw new ConflictException("A media asset with the same name already exists for this user");
         }
-        String checksum = fileStoreService.calculateChecksum(file);
+        String checksum = fileService.calculateChecksum(file);
 
-        StoredFile sf = storedFileRepository.findByChecksum(checksum).orElse(null);
+        StoredFile sf = storedFileService.findByChecksum(checksum);
 
         if (sf != null && mediaAssetRepository.findByOwnerAndStoredFile(owner, sf).isPresent()) {
             throw new ConflictException("A media asset with the same file already exists for this user");
@@ -68,7 +53,7 @@ public class MediaAssetService {
         if(sf == null) {
             String storagePath = uploadPath + "/" + checksum;
             try {
-                sf = storedFileRepository.save(fileStoreService.write(file, storagePath, checksum, getFileType(file)));
+                sf = storedFileService.save(fileService.write(file, storagePath, checksum, fileService.getFileType(file)));
             } catch (IOException e) {
                 throw new InternalServerErrorException("Error while saving the file");
             }
@@ -133,7 +118,7 @@ public class MediaAssetService {
             } catch (IOException e) {
                 throw new InternalServerErrorException("Error while deleting the file");
             }
-            storedFileRepository.delete(storedFile);
+            storedFileService.delete(storedFile);
         }
     }
 
@@ -165,7 +150,7 @@ public class MediaAssetService {
         MediaAsset ma = getMediaAsset(id);
         StoredFile sf = ma.getStoredFile();
         sf.setHasThumbnail(true);
-        storedFileRepository.save(sf);
+        storedFileService.save(sf);
     }
 
 }
