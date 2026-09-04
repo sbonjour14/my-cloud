@@ -2,6 +2,10 @@ package com.github.sbonjour.my_cloud.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -67,5 +71,18 @@ public class FileService {
             return FileType.VIDEO;
         else
             throw new InvalidFileTypeException("File type is not supported");
+    }
+
+
+    public boolean writeChunk(MultipartFile file, long position, Path tempFilePath) {
+        try (FileChannel channel = FileChannel.open(tempFilePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+            ByteBuffer byteBuffer = ByteBuffer.wrap(file.getBytes());
+            channel.position(position);
+            while (byteBuffer.hasRemaining())
+                channel.write(byteBuffer);
+        } catch (IOException e) {
+            return false;
+        }
+        return true;
     }
 }
