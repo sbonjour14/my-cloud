@@ -13,6 +13,7 @@ import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.UploadSession;
 import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
+import com.github.sbonjour.my_cloud.entity.UploadSession.BytesRange;
 import com.github.sbonjour.my_cloud.repository.UploadSessionRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -26,27 +27,29 @@ public class UploadSessionService {
     private final StoredFileService storedFileService;
     private final FileService fileService;
 
-    private long imageChunkSize = 1024*1024*2;
-    private long videoChunkSize = 1024*1024*10;
+    @Value("${upload.chunk-size.image}:2097152")
+    private long imageChunkSize;
+    @Value("${upload.chunk-size.video}:10485760")
+    private long videoChunkSize;
 
     @Value("${file.storage.path:/app/uploads}")
     private String uploadPath;
 
-    public UploadSession findByChecksumAndUser(String checksum, User user){
+    public UploadSession findByChecksumAndUser(String checksum, User user) {
         return repository.findByChecksumAndUser(checksum, user).orElse(null);
     }
 
-
-    public InitUploadResult init(String filename, MediaType mediaType, FileType fileType, long totalSize, int totalChunks, String checksum, User user) {
+    public InitUploadResult init(String filename, MediaType mediaType, FileType fileType, long totalSize,
+            String checksum, User user) {
         UploadSession us = findByChecksumAndUser(checksum, user);
-        if(us != null) 
+        if (us != null)
             return InitUploadResult.from(us);
-        
+
         StoredFile sf = storedFileService.findByChecksum(checksum);
-        if(sf != null) {
+        if (sf != null) {
 
             MediaAsset ma = mediaAssetService.findByOwnerAndStoredFile(user, sf);
-            if(ma != null)
+            if (ma != null)
                 return InitUploadResult.from(ma);
 
             ma = mediaAssetService.createMediaAsset(user, filename, sf);
@@ -54,40 +57,36 @@ public class UploadSessionService {
         }
 
         UploadSession uploadSession = UploadSession.builder()
-            .filename(filename)
-            .mediaType(mediaType.toString())
-            .fileType(fileType)
-            .totalSize(totalSize)
-            .totalChunks(totalChunks)
-            .checksum(checksum)
-            .user(user)
-            .uploadedChunks(new HashSet<>())
-            .tempFilePath(uploadPath + "/" + checksum + ".tmp")
-            .build();
+                .filename(filename)
+                .mediaType(mediaType.toString())
+                .fileType(fileType)
+                .totalSize(totalSize)
+                .checksum(checksum)
+                .user(user)
+                .uploadedRanges(new HashSet<BytesRange>())
+                .tempFilePath(uploadPath + "/" + checksum + ".tmp")
+                .build();
         repository.save(uploadSession);
-        
+
         return InitUploadResult.from(uploadSession);
     }
 
-    public void chunk(UUID id, MultipartFile file, int chunkindex){
-        // TODO
-    }
-
-    public UploadSession getUploadSession(UUID id){
+    public UploadSession chunk(UUID id, MultipartFile file, long start, long end) {
         return null;
     }
 
-
+    public UploadSession getUploadSession(UUID id) {
+        return null;
+    }
 
     public record InitUploadResult(boolean fileAlreadyExists, UploadSession uploadSession, MediaAsset mediaAsset) {
-        protected static InitUploadResult from(MediaAsset ma){
+        protected static InitUploadResult from(MediaAsset ma) {
             return new InitUploadResult(true, null, ma);
         }
-        protected static InitUploadResult from(UploadSession us){
+
+        protected static InitUploadResult from(UploadSession us) {
             return new InitUploadResult(false, us, null);
         }
     }
 
-
-    
 }

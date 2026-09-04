@@ -7,6 +7,7 @@ import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -26,11 +27,11 @@ import lombok.*;
 @Setter
 @Builder
 @AllArgsConstructor
-@EqualsAndHashCode (of = "id")
+@EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 public class UploadSession {
     @Id
-    @GeneratedValue (strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.UUID)
     UUID id;
 
     @Column(nullable = false)
@@ -45,10 +46,9 @@ public class UploadSession {
     @Column(nullable = false)
     FileType fileType;
 
-
     @Column(nullable = false)
     long totalSize;
-    
+
     @Column(nullable = false)
     long uploadedSize;
 
@@ -56,11 +56,8 @@ public class UploadSession {
     @Builder.Default
     UploadSessionStatus status = UploadSessionStatus.UPLOADING;
 
-    @Column(nullable = false)
-    int totalChunks;
-
     @ElementCollection
-    Set<Integer> uploadedChunks;
+    Set<BytesRange> uploadedRanges;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"))
@@ -70,5 +67,9 @@ public class UploadSession {
 
     public enum UploadSessionStatus {
         COMPLETE, UPLOADING, PAUSED
+    }
+
+    @Embeddable
+    public record BytesRange(long byteStart, long byteEnd) {
     }
 }
