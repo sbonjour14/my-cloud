@@ -41,3 +41,8 @@ file:
 logging:
   level:
     org.springframework.security: DEBUG
+
+upload:
+  chunk-size:
+    image: 1048576
+    video: 10485760
