@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,6 +15,7 @@ import com.github.sbonjour.my_cloud.entity.UploadSession;
 import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession.BytesRange;
+import com.github.sbonjour.my_cloud.exception.NotFoundException;
 import com.github.sbonjour.my_cloud.repository.UploadSessionRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -71,8 +73,13 @@ public class UploadSessionService {
         return InitUploadResult.from(uploadSession);
     }
 
-    public UploadSession chunk(UUID id, MultipartFile file, long start, long end) {
-        return null;
+
+
+    public WriteChunkResult writeChunk(UUID id, MultipartFile file, long start, long end, User user) {
+
+        UploadSession uploadSession = repository.findById(id).orElseThrow(() -> new NotFoundException("The uploadSession with id: " + id.toString() + " not found"));
+
+        return WriteChunkResult.from(uploadSession, HttpStatus.CREATED);
     }
 
     public UploadSession getUploadSession(UUID id) {
@@ -86,6 +93,12 @@ public class UploadSessionService {
 
         protected static InitUploadResult from(UploadSession us) {
             return new InitUploadResult(false, us, null);
+        }
+    }
+
+    public record WriteChunkResult(UploadSession uploadSession, HttpStatus status) {
+        protected static WriteChunkResult from(UploadSession us, HttpStatus status) {
+            return new WriteChunkResult(us, status);
         }
     }
 
