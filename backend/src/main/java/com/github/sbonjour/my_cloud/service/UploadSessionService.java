@@ -18,9 +18,11 @@ import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession.BytesRange;
 import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
+import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
 import com.github.sbonjour.my_cloud.exception.InvalidInputException;
 import com.github.sbonjour.my_cloud.exception.NotFoundException;
+import com.github.sbonjour.my_cloud.exception.RangeNotSatisfiableException;
 import com.github.sbonjour.my_cloud.repository.UploadSessionRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -78,9 +80,10 @@ public class UploadSessionService {
         return InitUploadResult.from(uploadSession);
     }
 
-    private WriteChunkResult setPausedSaveAndReturn(UploadSession us, HttpStatus status, String message) {
+    private WriteChunkResult setPausedSaveAndThrow(UploadSession us, RuntimeException exception) {
         us.setStatus(UploadSessionStatus.PAUSED);
-        return WriteChunkResult.from(repository.save(us), status, message);
+        repository.save(us);
+        throw exception;
     }
 
 
@@ -97,19 +100,20 @@ public class UploadSessionService {
             throw new AccessDeniedException("You are not allowed to have access to this resource");
 
         if(!uploadSession.isRangeValid(start, end))
-            throw new InvalidInputException("the range must be between 0 and " + (uploadSession.getTotalSize()-1));
+            throw new RangeNotSatisfiableException("the range must be between 0 and " + (uploadSession.getTotalSize()-1));
 
         long chunkSize = fileService.getFileType(file) == FileType.IMAGE ? imageChunkSize : videoChunkSize;
         boolean isLastChunk = end == uploadSession.getTotalSize() - 1;
 
         if(fileSize != chunkSize && !isLastChunk)
-            return setPausedSaveAndReturn(uploadSession, HttpStatus.CONFLICT, "the chunk size shoud be equal to " + chunkSize);
+            setPausedSaveAndThrow(uploadSession, new InvalidInputException("the chunk size shoud be equal to " + chunkSize));
 
         if(isLastChunk && fileSize > chunkSize)
-            return setPausedSaveAndReturn(uploadSession, HttpStatus.CONFLICT, "the chunk size shoud less than or equal to " + chunkSize);
+            setPausedSaveAndThrow(uploadSession, new ConflictException("the chunk size shoud less than or equal to " + chunkSize));
 
-        if(uploadSession.hasOverlapWith(start, end))
-            return setPausedSaveAndReturn(uploadSession,HttpStatus.CONFLICT, uploadPath);
+        if (uploadSession.hasOverlapWith(start, end)) {
+            setPausedSaveAndThrow(uploadSession, new ConflictException("Chunk overlaps with an existing range"));
+}
 
 
         boolean success = fileService.writeChunk(file, start, Path.of(uploadSession.getTempFilePath()));
