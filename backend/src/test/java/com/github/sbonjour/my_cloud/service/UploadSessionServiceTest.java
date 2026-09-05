@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
@@ -35,6 +37,7 @@ import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession.BytesRange;
 import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
+import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InvalidInputException;
 import com.github.sbonjour.my_cloud.exception.NotFoundException;
 import com.github.sbonjour.my_cloud.repository.UploadSessionRepository;
@@ -92,8 +95,19 @@ public class UploadSessionServiceTest {
 
             when(repository.save(any(UploadSession.class))).thenAnswer(invocation -> {
                 UploadSession res = invocation.getArgument(0);
-                res.setId(us.getId());
-                return res;
+                return UploadSession.builder()
+                        .id(us.getId())
+                        .checksum(res.getChecksum())
+                        .fileType(res.getFileType())
+                        .filename(res.getFilename())
+                        .user(res.getUser())
+                        .mediaType(res.getMediaType())
+                        .status(res.getStatus())
+                        .tempFilePath(res.getTempFilePath())
+                        .totalSize(res.getTotalSize())
+                        .uploadedRanges(res.getUploadedRanges())
+                        .uploadedSize(res.getUploadedSize())
+                        .build();
             });
 
             InitUploadResult result = service.init("test.jpg", MediaType.IMAGE_JPEG, FileType.IMAGE, 10L, "checksum",
@@ -235,7 +249,7 @@ public class UploadSessionServiceTest {
 
             @BeforeEach
             void setUp() {
-                lenient().when(fileService.getFileType(any())).thenReturn(FileType.IMAGE);
+                lenient().when(fileService.getFileType(any(MultipartFile.class))).thenReturn(FileType.IMAGE);
                 ReflectionTestUtils.setField(service, "imageChunkSize", 10L);
 
                 user = User.builder()
@@ -328,45 +342,44 @@ public class UploadSessionServiceTest {
 
             @Test
             void shouldNotWriteChunk_whenRangeOverlapsExistingRange() {
-                MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
-                        "otherChunk".getBytes());
-                us.addRange(0L, 9L);
+                    MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
+                                    "otherChunk".getBytes());
+                    us.addRange(0L, 9L);
 
-                when(repository.findById(any())).thenReturn(Optional.of(us));
-                when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
+                    when(repository.findById(any())).thenReturn(Optional.of(us));
+                    when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
 
-                WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 5L, 14L, user);
+                    assertThatThrownBy(() -> service.writeChunk(us.getId(), mockFile, 5L, 14L, user))
+                                    .isInstanceOf(ConflictException.class);
 
-                verify(fileService, never()).writeChunk(any(), anyLong(), any());
-                verify(repository).findById(eq(us.getId()));
+                    verify(fileService, never()).writeChunk(any(), anyLong(), any());
+                    verify(repository).findById(eq(us.getId()));
 
-                verify(repository).save(result.uploadSession());
-
-                assertThat(result.uploadSession().getStatus()).isEqualTo(UploadSessionStatus.PAUSED);
-                assertThat(result.uploadSession().getUploadedRanges()).containsExactly(new BytesRange(0L, 9L));
-
-                assertThat(result.status()).isEqualTo(HttpStatus.CONFLICT);
+                    ArgumentCaptor<UploadSession> captor = ArgumentCaptor.forClass(UploadSession.class);
+                    verify(repository).save(captor.capture());
+                    assertThat(captor.getValue().getStatus()).isEqualTo(UploadSessionStatus.PAUSED);
+                    assertThat(captor.getValue().getUploadedRanges()).containsExactly(new BytesRange(0L, 9L));
             }
 
             @Test
             void shouldNotWriteChunk_whenRangeExceedsChunkSize() {
-                when(fileService.getFileType(any())).thenReturn(FileType.IMAGE);
-                MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
-                        "otherChunkTooLong".getBytes());
+                    when(fileService.getFileType(any(MultipartFile.class))).thenReturn(FileType.IMAGE);
+                    MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
+                                    "otherChunkTooLong".getBytes());
 
-                when(repository.findById(any())).thenReturn(Optional.of(us));
-                when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
+                    when(repository.findById(any())).thenReturn(Optional.of(us));
+                    when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
 
-                WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 0L, 16L, user);
+                    assertThatThrownBy(() -> service.writeChunk(us.getId(), mockFile, 0L, 16L, user))
+                                    .isInstanceOf(InvalidInputException.class);
 
-                verify(fileService, never()).writeChunk(any(), anyLong(), any());
-                verify(repository).findById(eq(us.getId()));
-                verify(repository).save(result.uploadSession());
+                    verify(fileService, never()).writeChunk(any(), anyLong(), any());
+                    verify(repository).findById(eq(us.getId()));
 
-                assertThat(result.uploadSession().getStatus()).isEqualTo(UploadSessionStatus.PAUSED);
-                assertThat(result.uploadSession().getUploadedRanges()).isEmpty();
-
-                assertThat(result.status()).isEqualTo(HttpStatus.CONFLICT);
+                    ArgumentCaptor<UploadSession> captor = ArgumentCaptor.forClass(UploadSession.class);
+                    verify(repository).save(captor.capture());
+                    assertThat(captor.getValue().getStatus()).isEqualTo(UploadSessionStatus.PAUSED);
+                    assertThat(captor.getValue().getUploadedRanges()).isEmpty();
             }
 
             @Test
