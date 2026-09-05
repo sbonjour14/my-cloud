@@ -1,10 +1,12 @@
 package com.github.sbonjour.my_cloud.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,6 +34,7 @@ import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession.BytesRange;
 import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
+import com.github.sbonjour.my_cloud.exception.NotFoundException;
 import com.github.sbonjour.my_cloud.repository.UploadSessionRepository;
 import com.github.sbonjour.my_cloud.service.UploadSessionService.InitUploadResult;
 
@@ -220,106 +224,153 @@ public class UploadSessionServiceTest {
     @Nested
     class Chunk {
 
-        @Test
-        void shouldWriteFirstChunk_whenRangeStartsAtZero() {
-            ReflectionTestUtils.setField(service, "imageChunkSize", 10L);
-            UploadSession us = UploadSession.builder()
+        @Nested
+        class Image {
+
+            UploadSession us;
+            User user;
+
+            @BeforeEach
+            void setUp() {
+                ReflectionTestUtils.setField(service, "imageChunkSize", 10L);
+
+                user = User.builder()
+                    .displayName("test")
+                    .password("hashedPassword")
+                    .email("test@example.com")
                     .id(UUID.randomUUID())
-                    .checksum("checksum")
-                    .filename("test.jpg")
-                    .tempFilePath(uploadPath + "/" + "checksum.tmp")
-                    .fileType(FileType.IMAGE)
-                    .status(UploadSessionStatus.UPLOADING)
-                    .mediaType(MediaType.IMAGE_JPEG_VALUE)
-                    .totalSize(99L)
-                    .uploadedRanges(new HashSet<BytesRange>())
                     .build();
 
-            MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
-                    "test-chunk".getBytes());
+                us = UploadSession.builder()
+                        .id(UUID.randomUUID())
+                        .user(user)
+                        .checksum("checksum")
+                        .filename("test.jpg")
+                        .tempFilePath(uploadPath + "/" + "checksum.tmp")
+                        .fileType(FileType.IMAGE)
+                        .status(UploadSessionStatus.UPLOADING)
+                        .mediaType(MediaType.IMAGE_JPEG_VALUE)
+                        .totalSize(99L)
+                        .uploadedRanges(new HashSet<BytesRange>())
+                        .build();
+            }
 
-            verify(repository).findById(eq(us.getId()));
-            when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
-            when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
+            @Test
+            void shouldWriteFirstChunk_whenRangeStartsAtZero() {
+                MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
+                        "test-chunk".getBytes());
+                when(repository.findById(any())).thenReturn(Optional.of(us));
+                when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
+                when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
 
-            UploadSession result = service.chunk(us.getId(), mockFile, 0L, 9L);
+                UploadSession result = service.chunk(us.getId(), mockFile, 0L, 9L, user);
 
-            verify(fileService).writeChunk(eq(mockFile), eq(0L), eq(Path.of(us.getTempFilePath())));
+                verify(fileService).writeChunk(eq(mockFile), eq(0L), eq(Path.of(us.getTempFilePath())));
+                verify(repository).findById(eq(us.getId()));
 
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(us.getId());
-            assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(0, 9));
-            assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
-            assertThat(result.getUploadedSize()).isEqualTo(mockFile.getSize());
+                assertThat(result).isNotNull();
+                assertThat(result.getId()).isEqualTo(us.getId());
+                assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(0, 9));
+                assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
+                assertThat(result.getUploadedSize()).isEqualTo(mockFile.getSize());
+            }
+
+            @Test
+            void shouldWriteChunk_whenRangeIsInTheMiddle() {
+                MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
+                        "otherChunk".getBytes());
+
+                when(repository.findById(any())).thenReturn(Optional.of(us));
+                when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
+                when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
+
+                UploadSession result = service.chunk(us.getId(), mockFile, 20L, 29L, user);
+
+                verify(fileService).writeChunk(eq(mockFile), eq(20L), eq(Path.of(us.getTempFilePath())));
+                verify(repository).findById(eq(us.getId()));
+
+                assertThat(result).isNotNull();
+                assertThat(result.getId()).isEqualTo(us.getId());
+                assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(20L, 29L));
+                assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
+                assertThat(result.getUploadedSize()).isEqualTo(mockFile.getSize());
+            }
+
+            @Test
+            void shouldWriteChunk_whenRangeEndsAtTotalSize() {
+                MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
+                        "lastChunk".getBytes());
+                when(repository.findById(any())).thenReturn(Optional.of(us));
+                when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
+                when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
+
+                UploadSession result = service.chunk(us.getId(), mockFile, 90L, 98L, user);
+
+                verify(fileService).writeChunk(eq(mockFile), eq(90L), eq(Path.of(us.getTempFilePath())));
+                verify(repository).findById(eq(us.getId()));
+
+                assertThat(result).isNotNull();
+                assertThat(result.getId()).isEqualTo(us.getId());
+                assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(90L, 99L));
+                assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
+                assertThat(result.getUploadedSize()).isEqualTo(9L);
+            }
+
+            @Test
+            void shouldNotWriteChunk_whenRangeExceedsChunkSize() {
+                MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
+                        "otherChunkTooLong".getBytes());
+
+                when(repository.findById(any())).thenReturn(Optional.of(us));
+                when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
+
+                UploadSession result = service.chunk(us.getId(), mockFile, 0L, 17L, user);
+
+                verify(fileService, never()).writeChunk(any(), any(), any());
+                verify(repository).findById(eq(us.getId()));
+                ArgumentCaptor<UploadSession> captor = ArgumentCaptor.forClass(UploadSession.class);
+                verify(repository).save(captor.capture());
+                assertThat(captor.getValue().getStatus()).isEqualTo(UploadSessionStatus.PAUSED);
+
+                assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.PAUSED);
+                assertThat(result.getUploadedRanges()).isEmpty();
+            }
+
+            @Test
+            void shouldNotWriteChunk_whenUploadSessionNotFound() {
+                MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
+                        "otherChunk".getBytes());
+
+                when(repository.findById(any())).thenReturn(Optional.empty());
+
+                assertThatThrownBy(() -> service.chunk(us.getId(), mockFile, 10L, 19L, user))
+                        .isInstanceOf(NotFoundException.class);
+
+                verify(repository).findById(eq(us.getId()));
+            }
+
+            @Test
+            void shouldWriteChunk_whenSomeChunksAlreadyUploaded() {
+                MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
+                        "otherChunk".getBytes());
+                us.getUploadedRanges().add(new BytesRange(0L, 9L));
+                us.setUploadedSize(10L);
+
+                when(repository.findById(any())).thenReturn(Optional.of(us));
+                when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
+                when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
+
+                UploadSession result = service.chunk(us.getId(), mockFile, 10L, 19L, user);
+
+                verify(repository).findById(eq(us.getId()));
+                verify(fileService).writeChunk(eq(mockFile), eq(10L), eq(Path.of(us.getTempFilePath())));
+
+                verify(repository).save(result);
+                assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(
+                        new BytesRange(0L, 9L),
+                        new BytesRange(10L, 19L));
+                assertThat(result.getUploadedSize()).isEqualTo(20L);
+            }
         }
-
-        @Test
-        void shouldWriteChunk_whenRangeIsInTheMiddle() {
-            ReflectionTestUtils.setField(service, "imageChunkSize", 10L);
-            UploadSession us = UploadSession.builder()
-                    .id(UUID.randomUUID())
-                    .checksum("checksum")
-                    .filename("test.jpg")
-                    .tempFilePath(uploadPath + "/" + "checksum.tmp")
-                    .fileType(FileType.IMAGE)
-                    .status(UploadSessionStatus.UPLOADING)
-                    .mediaType(MediaType.IMAGE_JPEG_VALUE)
-                    .totalSize(99L)
-                    .uploadedRanges(new HashSet<BytesRange>())
-                    .build();
-
-            MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
-                    "otherChunk".getBytes());
-
-            when(repository.findById(any())).thenReturn(Optional.of(us));
-            when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
-            when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
-
-            UploadSession result = service.chunk(us.getId(), mockFile, 20L, 29L);
-
-            verify(fileService).writeChunk(eq(mockFile), eq(20L), eq(Path.of(us.getTempFilePath())));
-            verify(repository).findById(eq(us.getId()));
-
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(us.getId());
-            assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(20L, 29L));
-            assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
-            assertThat(result.getUploadedSize()).isEqualTo(mockFile.getSize());
-        }
-        
-        @Test
-        void shouldWriteChunk_whenRangeEndsAtTotalSize() {
-            ReflectionTestUtils.setField(service, "imageChunkSize", 10L);
-            UploadSession us = UploadSession.builder()
-                    .id(UUID.randomUUID())
-                    .checksum("checksum")
-                    .filename("test.jpg")
-                    .tempFilePath(uploadPath + "/" + "checksum.tmp")
-                    .fileType(FileType.IMAGE)
-                    .status(UploadSessionStatus.UPLOADING)
-                    .mediaType(MediaType.IMAGE_JPEG_VALUE)
-                    .totalSize(99L)
-                    .uploadedRanges(new HashSet<BytesRange>())
-                    .build();
-
-            MockMultipartFile mockFile = new MockMultipartFile("file", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
-                    "lastChunk".getBytes());
-            when(repository.findById(any())).thenReturn(Optional.of(us));
-            when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
-            when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
-
-            UploadSession result = service.chunk(us.getId(), mockFile, 90L, 98L);
-
-            verify(fileService).writeChunk(eq(mockFile), eq(90L), eq(Path.of(us.getTempFilePath())));
-            verify(repository).findById(eq(us.getId()));
-
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(us.getId());
-            assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(90L, 99L));
-            assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
-            assertThat(result.getUploadedSize()).isEqualTo(9L);
-        }
-
     }
-
 }
