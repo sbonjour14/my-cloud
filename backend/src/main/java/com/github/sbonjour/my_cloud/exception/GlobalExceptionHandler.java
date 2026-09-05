@@ -62,6 +62,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
+    @ExceptionHandler(RangeNotSatisfiableException.class)
+    public ResponseEntity<Map<String, Object>> handleRangeNotSatisfiable(RangeNotSatisfiableException ex) {
+        return buildResponse(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE, ex.getMessage());
+    }
+
     /**
      * Handles validation errors for method arguments.
      *
