@@ -50,4 +50,8 @@ public class MediaAsset {
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();
+
+    public String getUrl() {
+        return "/mediaAssets/" + id;
+    }
 }

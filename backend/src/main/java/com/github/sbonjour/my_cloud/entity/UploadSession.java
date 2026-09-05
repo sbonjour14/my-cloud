@@ -34,6 +34,7 @@ import lombok.*;
 public class UploadSession {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Setter(AccessLevel.NONE)
     UUID id;
 
     @Column(nullable = false)
@@ -89,7 +90,7 @@ public class UploadSession {
     }
 
     public boolean isRangeValid(long start, long end) {
-        return start >= 0L && end < totalSize;
+        return start >= 0L && start < end && end < totalSize;
     }
 
     public boolean isRangeValid(BytesRange range) {
@@ -120,5 +121,9 @@ public class UploadSession {
 
     public void addRange(long start, long end) {
         uploadedRanges.add(new BytesRange(start, end));
+    }
+
+    public String getUrl() {
+        return "/uploads/" + id;
     }
 }
