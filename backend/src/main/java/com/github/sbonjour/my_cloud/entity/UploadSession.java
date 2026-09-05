@@ -1,5 +1,7 @@
 package com.github.sbonjour.my_cloud.entity;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -71,5 +73,52 @@ public class UploadSession {
 
     @Embeddable
     public record BytesRange(long byteStart, long byteEnd) {
+    }
+
+
+    public boolean isComplete(){
+        List<BytesRange> ranges =  uploadedRanges.stream().sorted(Comparator.comparingLong(BytesRange::byteStart)).toList();
+        long currentPosition = 0L;
+        for(int i = 0; i < ranges.size(); i++) {
+            if(ranges.get(i).byteStart != currentPosition)
+                return false;
+
+            currentPosition = ranges.get(i).byteEnd + 1L;
+        }
+        return currentPosition == totalSize;
+    }
+
+    public boolean isRangeValid(long start, long end) {
+        return start >= 0L && end < totalSize;
+    }
+
+    public boolean isRangeValid(BytesRange range) {
+        return isRangeValid(range.byteStart, range.byteEnd);
+    }
+
+    public boolean hasOverlapWith(long start, long end){
+        return uploadedRanges.stream().anyMatch(range -> 
+            start <= range.byteEnd && end >= range.byteStart
+        );
+    }
+
+
+    public void addUploadedSize(long size) {
+        setUploadedSize(uploadedSize + size);
+    }
+
+    public boolean hasOverlapWith(BytesRange range) {
+        return hasOverlapWith(range.byteStart, range.byteEnd);
+    }
+
+    public boolean addRangeSafe(long start, long end) {
+        if (hasOverlapWith(start, end))
+            return false;
+        uploadedRanges.add(new BytesRange(start, end));
+        return true;
+    }
+
+    public void addRange(long start, long end) {
+        uploadedRanges.add(new BytesRange(start, end));
     }
 }
