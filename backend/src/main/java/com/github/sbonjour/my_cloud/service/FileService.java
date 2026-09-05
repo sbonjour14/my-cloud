@@ -9,6 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -61,7 +62,14 @@ public class FileService {
     }
     
     public FileType getFileType(MultipartFile file) {
-        String contentType = file.getContentType();
+        return getFileType(file.getContentType());
+    }
+    
+    public FileType getFileType(MediaType mediaType) {
+        return getFileType(mediaType.getType());
+    }
+
+    public FileType getFileType(String contentType) {
         if (contentType == null)
             throw new InvalidFileTypeException("File type is not supported");
 

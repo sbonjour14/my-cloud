@@ -128,7 +128,7 @@ public class MediaAssetServiceTest {
                 return ma;
             });
 
-            when(fileService.getFileType(any())).thenReturn(FileType.IMAGE);
+            when(fileService.getFileType(any(MultipartFile.class))).thenReturn(FileType.IMAGE);
             when(fileService.write(any(), any(), any(), any())).thenAnswer(invocation -> {
                 MultipartFile f = invocation.getArgument(0);
                 String storagePath = invocation.getArgument(1);
