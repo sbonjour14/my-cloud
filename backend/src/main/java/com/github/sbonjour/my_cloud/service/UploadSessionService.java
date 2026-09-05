@@ -1,11 +1,13 @@
 package com.github.sbonjour.my_cloud.service;
 
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,6 +17,9 @@ import com.github.sbonjour.my_cloud.entity.UploadSession;
 import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession.BytesRange;
+import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
+import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
+import com.github.sbonjour.my_cloud.exception.InvalidInputException;
 import com.github.sbonjour.my_cloud.exception.NotFoundException;
 import com.github.sbonjour.my_cloud.repository.UploadSessionRepository;
 
@@ -73,13 +78,51 @@ public class UploadSessionService {
         return InitUploadResult.from(uploadSession);
     }
 
+    private WriteChunkResult setPausedSaveAndReturn(UploadSession us, HttpStatus status, String message) {
+        us.setStatus(UploadSessionStatus.PAUSED);
+        return WriteChunkResult.from(repository.save(us), status, message);
+    }
 
 
     public WriteChunkResult writeChunk(UUID id, MultipartFile file, long start, long end, User user) {
+        long fileSize = file.getSize();
 
+        if(end - start + 1 != fileSize)
+            throw new InvalidInputException("the chunk size should be equal to " + (end - start + 1));
+
+        
         UploadSession uploadSession = repository.findById(id).orElseThrow(() -> new NotFoundException("The uploadSession with id: " + id.toString() + " not found"));
 
-        return WriteChunkResult.from(uploadSession, HttpStatus.CREATED);
+        if(!uploadSession.getUser().getId().equals(user.getId()))
+            throw new AccessDeniedException("You are not allowed to have access to this resource");
+
+        if(!uploadSession.isRangeValid(start, end))
+            throw new InvalidInputException("the range must be between 0 and " + (uploadSession.getTotalSize()-1));
+
+        long chunkSize = fileService.getFileType(file) == FileType.IMAGE ? imageChunkSize : videoChunkSize;
+        boolean isLastChunk = end == uploadSession.getTotalSize() - 1;
+
+        if(fileSize != chunkSize && !isLastChunk)
+            return setPausedSaveAndReturn(uploadSession, HttpStatus.CONFLICT, "the chunk size shoud be equal to " + chunkSize);
+
+        if(isLastChunk && fileSize > chunkSize)
+            return setPausedSaveAndReturn(uploadSession, HttpStatus.CONFLICT, "the chunk size shoud less than or equal to " + chunkSize);
+
+        if(uploadSession.hasOverlapWith(start, end))
+            return setPausedSaveAndReturn(uploadSession,HttpStatus.CONFLICT, uploadPath);
+
+
+        boolean success = fileService.writeChunk(file, start, Path.of(uploadSession.getTempFilePath()));
+        
+        if(!success)
+            throw new InternalServerErrorException("error while uploading the chunk");
+
+        uploadSession.addRange(start, end);;
+        uploadSession.addUploadedSize(fileSize);
+
+        repository.save(uploadSession);
+
+        return WriteChunkResult.from(uploadSession, HttpStatus.CREATED, "OK");
     }
 
     public UploadSession getUploadSession(UUID id) {
@@ -87,7 +130,7 @@ public class UploadSessionService {
     }
 
     public record InitUploadResult(boolean fileAlreadyExists, UploadSession uploadSession, MediaAsset mediaAsset) {
-        protected static InitUploadResult from(MediaAsset ma) {
+        private static InitUploadResult from(MediaAsset ma) {
             return new InitUploadResult(true, null, ma);
         }
 
@@ -96,9 +139,9 @@ public class UploadSessionService {
         }
     }
 
-    public record WriteChunkResult(UploadSession uploadSession, HttpStatus status) {
-        protected static WriteChunkResult from(UploadSession us, HttpStatus status) {
-            return new WriteChunkResult(us, status);
+    public record WriteChunkResult(UploadSession uploadSession, HttpStatus status, String message) {
+        private static WriteChunkResult from(UploadSession us, HttpStatus status, String message) {
+            return new WriteChunkResult(us, status, message);
         }
     }
 
