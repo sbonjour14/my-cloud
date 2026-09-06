@@ -89,7 +89,7 @@ public class MediaAssetService {
         Map<String, String> message = Map.of(
                 "mediaAssetId", mediaAsset.getId().toString(),
                 "storagePath", mediaAsset.getStoredFile().getStoragePath(),
-                "mediaType", mediaAsset.getStoredFile().getMediaType().toString());
+                "fileType", mediaAsset.getStoredFile().getFileType().toString());
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.THUMBNAIL_QUEUE, message);
     }
