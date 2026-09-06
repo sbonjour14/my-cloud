@@ -70,7 +70,7 @@ public class UploadSessionController {
 
         WriteChunkResult result = uploadSessionService.writeChunk(id, chunk, start, end, user);
 
-        if(result.uploadSession().getStatus().equals(UploadSessionStatus.COMPLETE))
+        if(result.uploadSession() == null)
             return ResponseEntity.status(HttpStatus.CREATED).body(result.mediaAsset().getUrl());
         return ResponseEntity.ok(null);
     }

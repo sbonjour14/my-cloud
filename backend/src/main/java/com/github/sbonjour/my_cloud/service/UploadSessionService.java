@@ -154,8 +154,8 @@ public class UploadSessionService {
         static WriteChunkResult from(UploadSession us) {
             return new WriteChunkResult(us, null);
         }
-        static WriteChunkResult from(UploadSession us, MediaAsset ma) {
-            return new WriteChunkResult(us, ma);
+        static WriteChunkResult from(MediaAsset ma) {
+            return new WriteChunkResult(null, ma);
         }
     }
 
