@@ -13,6 +13,7 @@ import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.repository.UploadSessionRepository;
 import com.github.sbonjour.my_cloud.service.FileService;
 import com.github.sbonjour.my_cloud.service.MediaAssetService;
+import com.github.sbonjour.my_cloud.service.StoredFileService;
 import com.github.sbonjour.my_cloud.service.UploadSessionService;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +26,8 @@ public abstract class UploadSessionServiceTest {
         @Mock
         protected MediaAssetService mediaAssetService;
         @Mock
+        protected StoredFileService storedFileService;
+        @Mock
         protected FileService fileService;
 
         protected String uploadPath = "/uploads";
@@ -34,10 +37,10 @@ public abstract class UploadSessionServiceTest {
         void setUp() {
                 ReflectionTestUtils.setField(service, "uploadPath", uploadPath);
                 user = User.builder()
-                        .displayName("test")
-                        .email("test@example.com")
-                        .id(UUID.randomUUID())
-                        .password("hashedPassword")
-                        .build();
+                                .displayName("test")
+                                .email("test@example.com")
+                                .id(UUID.randomUUID())
+                                .password("hashedPassword")
+                                .build();
         }
 }

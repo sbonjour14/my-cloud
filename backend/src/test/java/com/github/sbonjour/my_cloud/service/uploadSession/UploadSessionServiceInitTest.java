@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.http.MediaType;
 
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
@@ -20,172 +19,173 @@ import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession;
 import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
 import com.github.sbonjour.my_cloud.entity.User;
-import com.github.sbonjour.my_cloud.service.StoredFileService;
 import com.github.sbonjour.my_cloud.service.UploadSessionService.InitUploadResult;
 
 public class UploadSessionServiceInitTest extends UploadSessionServiceTest {
-    @Mock
-    protected StoredFileService storedFileService;
-    
-    @Test
-    void createsNewSession_whenNoExistingSessionOrAsset() {
 
-        UploadSession us = UploadSession.builder()
-                .id(UUID.randomUUID())
-                .filename("test.jpg")
-                .tempFilePath(uploadPath + "/" + "checksum.tmp")
-                .mediaType(MediaType.IMAGE_JPEG_VALUE)
-                .fileType(FileType.IMAGE)
-                .totalSize(10)
-                .checksum("checksum")
-                .status(UploadSessionStatus.UPLOADING)
-                .build();
+        @Test
+        void createsNewSession_whenNoExistingSessionOrAsset() {
 
-        when(repository.findByChecksumAndUser(anyString(), any(User.class))).thenReturn(Optional.empty());
-        when(storedFileService.findByChecksum(anyString())).thenReturn(null);
+                UploadSession us = UploadSession.builder()
+                                .id(UUID.randomUUID())
+                                .filename("test.jpg")
+                                .tempFilePath(uploadPath + "/" + "checksum.tmp")
+                                .mediaType(MediaType.IMAGE_JPEG_VALUE)
+                                .fileType(FileType.IMAGE)
+                                .totalSize(10)
+                                .checksum("checksum")
+                                .status(UploadSessionStatus.UPLOADING)
+                                .build();
 
-        when(repository.save(any(UploadSession.class))).thenAnswer(invocation -> {
-            UploadSession res = invocation.getArgument(0);
-            return UploadSession.builder()
-                    .id(us.getId())
-                    .checksum(res.getChecksum())
-                    .fileType(res.getFileType())
-                    .filename(res.getFilename())
-                    .user(res.getUser())
-                    .mediaType(res.getMediaType())
-                    .status(res.getStatus())
-                    .tempFilePath(res.getTempFilePath())
-                    .totalSize(res.getTotalSize())
-                    .uploadedRanges(res.getUploadedRanges())
-                    .uploadedSize(res.getUploadedSize())
-                    .build();
-        });
+                when(repository.findByChecksumAndUser(anyString(), any(User.class))).thenReturn(Optional.empty());
+                when(storedFileService.findByChecksum(anyString())).thenReturn(null);
 
-        InitUploadResult result = service.init("test.jpg", MediaType.IMAGE_JPEG, FileType.IMAGE, 10L, "checksum",
-                user);
+                when(repository.save(any(UploadSession.class))).thenAnswer(invocation -> {
+                        UploadSession res = invocation.getArgument(0);
+                        return UploadSession.builder()
+                                        .id(us.getId())
+                                        .checksum(res.getChecksum())
+                                        .fileType(res.getFileType())
+                                        .filename(res.getFilename())
+                                        .user(res.getUser())
+                                        .mediaType(res.getMediaType())
+                                        .status(res.getStatus())
+                                        .tempFilePath(res.getTempFilePath())
+                                        .totalSize(res.getTotalSize())
+                                        .uploadedRanges(res.getUploadedRanges())
+                                        .uploadedSize(res.getUploadedSize())
+                                        .build();
+                });
 
-        verify(repository).findByChecksumAndUser(eq("checksum"), eq(user));
-        verify(storedFileService).findByChecksum(eq("checksum"));
-        verify(repository).save(any());
+                InitUploadResult result = service.init("test.jpg", MediaType.IMAGE_JPEG, FileType.IMAGE, 10L,
+                                "checksum",
+                                user);
 
-        assertThat(result.fileAlreadyExists()).isEqualTo(false);
-        assertThat(result.mediaAsset()).isNull();
-        assertThat(result.uploadSession()).isNotNull();
-        assertThat(result.uploadSession().getUploadedRanges()).isEmpty();
-        assertThat(result.uploadSession().getUploadedSize()).isEqualTo(0);
-        assertThat(result.uploadSession().getTempFilePath()).isEqualTo(us.getTempFilePath());
-        assertThat(result.uploadSession().getMediaType()).isEqualTo(us.getMediaType());
-        assertThat(result.uploadSession().getStatus()).isEqualTo(us.getStatus());
-        assertThat(result.uploadSession().getFileType()).isEqualTo(us.getFileType());
-    }
+                verify(repository).findByChecksumAndUser(eq("checksum"), eq(user));
+                verify(storedFileService).findByChecksum(eq("checksum"));
+                verify(repository).save(any());
 
-    @Test
-    void returnsExistingSession_whenSessionAlreadyExists() {
-        UploadSession us = UploadSession.builder()
-                .id(UUID.randomUUID())
-                .filename("test.jpg")
-                .tempFilePath(uploadPath + "/" + "checksum.tmp")
-                .mediaType(MediaType.IMAGE_JPEG_VALUE)
-                .fileType(FileType.IMAGE)
-                .totalSize(10)
-                .checksum("checksum")
-                .status(UploadSessionStatus.UPLOADING)
-                .build();
-        when(repository.findByChecksumAndUser(anyString(), any(User.class))).thenReturn(Optional.of(us));
+                assertThat(result.fileAlreadyExists()).isEqualTo(false);
+                assertThat(result.mediaAsset()).isNull();
+                assertThat(result.uploadSession()).isNotNull();
+                assertThat(result.uploadSession().getUploadedRanges()).isEmpty();
+                assertThat(result.uploadSession().getUploadedSize()).isEqualTo(0);
+                assertThat(result.uploadSession().getTempFilePath()).isEqualTo(us.getTempFilePath());
+                assertThat(result.uploadSession().getMediaType()).isEqualTo(us.getMediaType());
+                assertThat(result.uploadSession().getStatus()).isEqualTo(us.getStatus());
+                assertThat(result.uploadSession().getFileType()).isEqualTo(us.getFileType());
+        }
 
-        InitUploadResult result = service.init("test.jpg", MediaType.IMAGE_JPEG, FileType.IMAGE, 10L, "checksum",
-                user);
+        @Test
+        void returnsExistingSession_whenSessionAlreadyExists() {
+                UploadSession us = UploadSession.builder()
+                                .id(UUID.randomUUID())
+                                .filename("test.jpg")
+                                .tempFilePath(uploadPath + "/" + "checksum.tmp")
+                                .mediaType(MediaType.IMAGE_JPEG_VALUE)
+                                .fileType(FileType.IMAGE)
+                                .totalSize(10)
+                                .checksum("checksum")
+                                .status(UploadSessionStatus.UPLOADING)
+                                .build();
+                when(repository.findByChecksumAndUser(anyString(), any(User.class))).thenReturn(Optional.of(us));
 
-        verify(repository).findByChecksumAndUser(eq("checksum"), eq(user));
+                InitUploadResult result = service.init("test.jpg", MediaType.IMAGE_JPEG, FileType.IMAGE, 10L,
+                                "checksum",
+                                user);
 
-        assertThat(result.fileAlreadyExists()).isEqualTo(false);
-        assertThat(result.mediaAsset()).isNull();
-        assertThat(result.uploadSession()).isEqualTo(us);
-    }
+                verify(repository).findByChecksumAndUser(eq("checksum"), eq(user));
 
-    @Test
-    void returnsAssetId_whenChecksumMatchesExistingStoredFile() {
+                assertThat(result.fileAlreadyExists()).isEqualTo(false);
+                assertThat(result.mediaAsset()).isNull();
+                assertThat(result.uploadSession()).isEqualTo(us);
+        }
 
-        StoredFile storedFile = StoredFile.builder()
-                .fileType(FileType.IMAGE)
-                .hasThumbnail(true)
-                .id(UUID.randomUUID())
-                .mediaType(MediaType.IMAGE_JPEG_VALUE)
-                .storagePath(uploadPath + "/" + "checksum")
-                .checksum("checksum")
-                .build();
+        @Test
+        void returnsAssetId_whenChecksumMatchesExistingStoredFile() {
 
-        MediaAsset expected = MediaAsset.builder()
-                .storedFile(storedFile)
-                .owner(user)
-                .filename("test.jpg")
-                .build();
+                StoredFile storedFile = StoredFile.builder()
+                                .fileType(FileType.IMAGE)
+                                .hasThumbnail(true)
+                                .id(UUID.randomUUID())
+                                .mediaType(MediaType.IMAGE_JPEG_VALUE)
+                                .storagePath(uploadPath + "/" + "checksum")
+                                .checksum("checksum")
+                                .build();
 
-        when(repository.findByChecksumAndUser("checksum", user)).thenReturn(Optional.empty());
-        when(storedFileService.findByChecksum(anyString())).thenReturn(storedFile);
+                MediaAsset expected = MediaAsset.builder()
+                                .storedFile(storedFile)
+                                .owner(user)
+                                .filename("test.jpg")
+                                .build();
 
-        when(mediaAssetService.findByOwnerAndStoredFile(any(), any())).thenReturn(null);
-        when(mediaAssetService.createMediaAsset(any(), anyString(), any())).thenAnswer(invocation -> {
-            User usr = invocation.getArgument(0);
-            String filename = invocation.getArgument(1);
-            StoredFile sf = invocation.getArgument(2);
+                when(repository.findByChecksumAndUser("checksum", user)).thenReturn(Optional.empty());
+                when(storedFileService.findByChecksum(anyString())).thenReturn(storedFile);
 
-            return MediaAsset.builder()
-                    .id(expected.getId())
-                    .filename(filename)
-                    .owner(usr)
-                    .storedFile(sf)
-                    .build();
-        });
+                when(mediaAssetService.findByOwnerAndStoredFile(any(), any())).thenReturn(null);
+                when(mediaAssetService.createMediaAsset(any(), anyString(), any())).thenAnswer(invocation -> {
+                        User usr = invocation.getArgument(0);
+                        String filename = invocation.getArgument(1);
+                        StoredFile sf = invocation.getArgument(2);
 
-        InitUploadResult result = service.init("test.jpg", MediaType.IMAGE_JPEG, FileType.IMAGE, 10L, "checksum",
-                user);
+                        return MediaAsset.builder()
+                                        .id(expected.getId())
+                                        .filename(filename)
+                                        .owner(usr)
+                                        .storedFile(sf)
+                                        .build();
+                });
 
-        verify(mediaAssetService).createMediaAsset(eq(user), eq("test.jpg"), eq(storedFile));
-        verify(mediaAssetService).findByOwnerAndStoredFile(eq(user), eq(storedFile));
+                InitUploadResult result = service.init("test.jpg", MediaType.IMAGE_JPEG, FileType.IMAGE, 10L,
+                                "checksum",
+                                user);
 
-        assertThat(result).isNotNull();
-        assertThat(result.fileAlreadyExists()).isTrue();
-        assertThat(result.uploadSession()).isNull();
-        assertThat(result.mediaAsset()).isNotNull();
-        assertThat(result.mediaAsset().getId()).isEqualTo(expected.getId());
-        assertThat(result.mediaAsset().getStoredFile()).isEqualTo(expected.getStoredFile());
-        assertThat(result.mediaAsset().getOwner()).isEqualTo(expected.getOwner());
-        assertThat(result.mediaAsset().getFilename()).isEqualTo(expected.getFilename());
-    }
+                verify(mediaAssetService).createMediaAsset(eq(user), eq("test.jpg"), eq(storedFile));
+                verify(mediaAssetService).findByOwnerAndStoredFile(eq(user), eq(storedFile));
 
-    @Test
-    void returnsAssetId_whenChecksumMatchesExistingMediaAsset() {
+                assertThat(result).isNotNull();
+                assertThat(result.fileAlreadyExists()).isTrue();
+                assertThat(result.uploadSession()).isNull();
+                assertThat(result.mediaAsset()).isNotNull();
+                assertThat(result.mediaAsset().getId()).isEqualTo(expected.getId());
+                assertThat(result.mediaAsset().getStoredFile()).isEqualTo(expected.getStoredFile());
+                assertThat(result.mediaAsset().getOwner()).isEqualTo(expected.getOwner());
+                assertThat(result.mediaAsset().getFilename()).isEqualTo(expected.getFilename());
+        }
 
-        StoredFile storedFile = StoredFile.builder()
-                .fileType(FileType.IMAGE)
-                .hasThumbnail(true)
-                .id(UUID.randomUUID())
-                .mediaType(MediaType.IMAGE_JPEG_VALUE)
-                .storagePath(uploadPath + "/" + "checksum")
-                .checksum("checksum")
-                .build();
+        @Test
+        void returnsAssetId_whenChecksumMatchesExistingMediaAsset() {
 
-        MediaAsset ma = MediaAsset.builder()
-                .storedFile(storedFile)
-                .owner(user)
-                .filename("test.jpg")
-                .build();
+                StoredFile storedFile = StoredFile.builder()
+                                .fileType(FileType.IMAGE)
+                                .hasThumbnail(true)
+                                .id(UUID.randomUUID())
+                                .mediaType(MediaType.IMAGE_JPEG_VALUE)
+                                .storagePath(uploadPath + "/" + "checksum")
+                                .checksum("checksum")
+                                .build();
 
-        when(repository.findByChecksumAndUser("checksum", user)).thenReturn(Optional.empty());
-        when(storedFileService.findByChecksum(anyString())).thenReturn(storedFile);
+                MediaAsset ma = MediaAsset.builder()
+                                .storedFile(storedFile)
+                                .owner(user)
+                                .filename("test.jpg")
+                                .build();
 
-        when(mediaAssetService.findByOwnerAndStoredFile(any(), any())).thenReturn(ma);
+                when(repository.findByChecksumAndUser("checksum", user)).thenReturn(Optional.empty());
+                when(storedFileService.findByChecksum(anyString())).thenReturn(storedFile);
 
-        InitUploadResult result = service.init("test.jpg", MediaType.IMAGE_JPEG, FileType.IMAGE, 10L, "checksum",
-                user);
+                when(mediaAssetService.findByOwnerAndStoredFile(any(), any())).thenReturn(ma);
 
-        verify(mediaAssetService).findByOwnerAndStoredFile(eq(user), eq(storedFile));
+                InitUploadResult result = service.init("test.jpg", MediaType.IMAGE_JPEG, FileType.IMAGE, 10L,
+                                "checksum",
+                                user);
 
-        assertThat(result).isNotNull();
-        assertThat(result.fileAlreadyExists()).isTrue();
-        assertThat(result.uploadSession()).isNull();
-        assertThat(result.mediaAsset()).isNotNull();
-    }
+                verify(mediaAssetService).findByOwnerAndStoredFile(eq(user), eq(storedFile));
+
+                assertThat(result).isNotNull();
+                assertThat(result.fileAlreadyExists()).isTrue();
+                assertThat(result.uploadSession()).isNull();
+                assertThat(result.mediaAsset()).isNotNull();
+        }
 
 }
