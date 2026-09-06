@@ -36,11 +36,12 @@ public class UploadSessionService {
     private final StoredFileService storedFileService;
     private final FileService fileService;
 
-    @Value("${upload.chunk-size.image}:2097152")
-    private long imageChunkSize;
-    @Value("${upload.chunk-size.video}:10485760")
-    private long videoChunkSize;
 
+    @Value("${upload.chunk-size.image:1048576}")
+    private long imageChunkSize;
+
+    @Value("${upload.chunk-size.video:10485760}")
+    private long videoChunkSize;
     @Value("${file.storage.path:/app/uploads}")
     private String uploadPath;
 
