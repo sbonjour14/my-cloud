@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -36,10 +38,13 @@ public class FileService {
         return sf;
 
     }
-
-    public String calculateChecksum(MultipartFile file) {
+    public String calculateChecksum(Path path) throws IOException{
+        InputStream is = Files.newInputStream(path);
+        return calculateChecksum(is);
+    }
+    public String calculateChecksum(InputStream is) throws IOException {
         MessageDigest digest;
-        try (InputStream is = file.getInputStream()) {
+        try {
             digest = MessageDigest.getInstance("SHA-256");
             byte[] buffer = new byte[65536];
             int bytesRead;
@@ -48,17 +53,17 @@ public class FileService {
             }
         } catch (NoSuchAlgorithmException e) {
             throw new InternalServerErrorException("Error Upload the file");
-        } catch (IOException e) {
-            throw new InternalServerErrorException("Error accessing the file");
         }
         byte[] hash = digest.digest();
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hash) {
-            sb.append(String.format("%02x", b));
+        return HexFormat.of().formatHex(hash);
+    }
+
+    public String calculateChecksum(MultipartFile file) {
+        try (InputStream is = file.getInputStream()) {
+            return calculateChecksum(is);
+        } catch (IOException e) {
+           throw new InternalServerErrorException("Error accessing the file");
         }
-
-        return sb.toString();
-
     }
     
     public FileType getFileType(MultipartFile file) {
@@ -92,5 +97,18 @@ public class FileService {
             return false;
         }
         return true;
+    }
+
+    public void renameFile(Path filePath, Path target) {
+        try {
+            if (Files.exists(target)) {
+                Files.deleteIfExists(filePath);
+                return;
+            }
+            Files.move(filePath, target);
+        } catch (IOException e) {
+            throw new InternalServerErrorException(
+                    "An error occurred while moving the file: " + filePath + " to: " + target);
+        }
     }
 }
