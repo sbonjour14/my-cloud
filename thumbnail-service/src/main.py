@@ -4,7 +4,7 @@ import time
 import pika # pyright: ignore[reportMissingModuleSource]
 import requests
 import cv2  # pyright: ignore[reportMissingImports]
-from PIL import Image
+from PIL import Image, ImageOps
 
 RABBITMQ_HOST = os.environ["RABBITMQ_HOST"]
 RABBITMQ_PORT = int(os.environ["RABBITMQ_PORT"])
@@ -46,6 +46,7 @@ def generate_thumbnail_of_image(original_path: str) -> str:
     thumbnail_path = os.path.join(thumbnail_dir, filename)
 
     with Image.open(original_path) as img:
+        img = ImageOps.exif_transpose(img)
         img.thumbnail(THUMBNAIL_SIZE)
         img.save(thumbnail_path, "WEBP")
 
@@ -98,7 +99,7 @@ def on_message(channel, method, _ ,body):
     message = json.loads(body)
     media_asset_id = message["mediaAssetId"]
     storage_path = message["storagePath"]
-    media_type = message["mediaType"]
+    file_type = message["fileType"]
     directory = os.path.dirname(storage_path)
     thumbnail_path = os.path.join(directory, "thumbnail", os.path.basename(storage_path))
 
@@ -113,10 +114,12 @@ def on_message(channel, method, _ ,body):
             return
 
         print(f"Traitement de {media_asset_id} ({storage_path})")
-        if media_type == "IMAGE":
+        if file_type == "IMAGE":
             thumbnail_path = generate_thumbnail_of_image(storage_path)
-        if media_type == "VIDEO":
+        elif file_type == "VIDEO":
             thumbnail_path = generate_thumbnail_of_video(storage_path)
+        else:
+            raise ValueError(f"Type de média inconnu : {file_type}")
         print(f"Miniature créée : {thumbnail_path}")
 
         notify_backend(media_asset_id)

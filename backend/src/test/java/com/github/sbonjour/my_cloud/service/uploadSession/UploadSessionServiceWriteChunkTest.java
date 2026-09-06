@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,8 +15,11 @@ import static org.mockito.Mockito.when;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.UUID;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 
+import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,7 +29,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.github.sbonjour.my_cloud.entity.MediaAsset;
+import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.UploadSession;
+import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession.BytesRange;
 import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
@@ -133,7 +141,7 @@ public class UploadSessionServiceWriteChunkTest extends UploadSessionServiceTest
                     .containsExactlyInAnyOrder(new BytesRange(90L, 98L));
             assertThat(result.uploadSession().getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
             assertThat(result.uploadSession().getUploadedSize()).isEqualTo(9L);
-            
+
             assertThat(result.mediaAsset()).isNull();
         }
 
@@ -237,6 +245,81 @@ public class UploadSessionServiceWriteChunkTest extends UploadSessionServiceTest
             verify(repository, never()).findById(any());
             verify(repository, never()).save(any());
             verify(fileService, never()).writeChunk(any(), anyLong(), any());
+        }
+
+        @Test
+        void shouldReturnMediaAsset_whenUploadIsComplete() throws IOException {
+
+            StoredFile expectedStoredFile = StoredFile.builder()
+                    .checksum(us.getChecksum())
+                    .hasThumbnail(false)
+                    .mediaType(us.getMediaType())
+                    .fileType(us.getFileType())
+                    .sizeBytes(us.getTotalSize())
+                    .storagePath(Strings.CS.removeEnd(us.getTempFilePath(), ".tmp"))
+                    .build();
+
+            MediaAsset expectedMediaAsset = MediaAsset.builder()
+                    .id(UUID.randomUUID())
+                    .storedFile(expectedStoredFile)
+                    .filename(us.getFilename())
+                    .owner(user)
+                    .build();
+
+            MockMultipartFile mockFile = new MockMultipartFile("chunk", "test.jpg", MediaType.IMAGE_JPEG_VALUE,
+                    "lastchunk".getBytes());
+
+            long position = 0L;
+            for (int i = 0; i < 9; i++) {
+                us.getUploadedRanges().add(new BytesRange(position, position + 9L));
+                position += 10L;
+            }
+
+            when(fileService.writeChunk(any(MultipartFile.class), eq(90L), eq(Path.of(us.getTempFilePath()))))
+                    .thenReturn(true);
+            when(repository.findById(any(UUID.class))).thenReturn(Optional.of(us));
+            when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
+
+            when(mediaAssetService.createMediaAsset(any(User.class), anyString(), any())).thenAnswer(invocation -> {
+                User usr = invocation.getArgument(0);
+                String filename = invocation.getArgument(1);
+                StoredFile sf = invocation.getArgument(2);
+                return MediaAsset.builder()
+                        .owner(usr)
+                        .id(expectedMediaAsset.getId())
+                        .storedFile(sf)
+                        .filename(filename)
+                        .createdAt(Instant.now())
+                        .build();
+            });
+            when(storedFileService.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+            when(fileService.calculateChecksum(any(Path.class))).thenReturn(us.getChecksum());
+            doNothing().when(fileService).renameFile(any(), any());
+
+            WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 90L, 98L, user);
+
+            assertThat(result.mediaAsset()).isNotNull();
+            assertThat(result.uploadSession()).isNull();
+
+            MediaAsset resultAsset = result.mediaAsset();
+            StoredFile resultStoredFile = resultAsset.getStoredFile();
+
+            verify(repository).save(us);
+            verify(storedFileService).save(any());
+            verify(repository).deleteById(us.getId());
+
+            verify(fileService).renameFile(eq(Path.of(us.getTempFilePath())), eq(Path.of(expectedStoredFile.getStoragePath())));
+            verify(mediaAssetService).createMediaAsset(eq(user), eq(us.getFilename()), eq(resultStoredFile));
+
+            assertThat(resultAsset.getFilename()).isEqualTo(expectedMediaAsset.getFilename());
+            assertThat(resultAsset.getOwner()).isEqualTo(expectedMediaAsset.getOwner());
+
+            assertThat(resultStoredFile.getFileType()).isEqualTo(expectedStoredFile.getFileType());
+            assertThat(resultStoredFile.getChecksum()).isEqualTo(expectedStoredFile.getChecksum());
+            assertThat(resultStoredFile.getMediaType()).isEqualTo(expectedStoredFile.getMediaType());
+            assertThat(resultStoredFile.getStoragePath()).isEqualTo(expectedStoredFile.getStoragePath());
+            assertThat(resultStoredFile.getSizeBytes()).isEqualTo(expectedStoredFile.getSizeBytes());
+            assertThat(resultStoredFile.isHasThumbnail()).isEqualTo(expectedStoredFile.isHasThumbnail());
         }
     }
 

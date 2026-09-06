@@ -1,5 +1,6 @@
 package com.github.sbonjour.my_cloud.service;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.UUID;
@@ -130,9 +131,38 @@ public class UploadSessionService {
             throw new InternalServerErrorException("error while uploading the chunk");
 
         uploadSession.addRange(start, end);
-        ;
         uploadSession.addUploadedSize(fileSize);
 
+        if(uploadSession.isComplete()) {
+            uploadSession.setStatus(UploadSessionStatus.COMPLETE);
+            repository.save(uploadSession);
+            try {
+
+                String checksum = fileService.calculateChecksum(Path.of(uploadSession.getTempFilePath()));
+
+                if(!checksum.equals(uploadSession.getChecksum()))
+                    throw new ConflictException("The uploaded file does not match the expected checksum, please retry the upload.");
+                String storagePath = uploadPath + "/" + checksum;
+                fileService.renameFile(Path.of(uploadSession.getTempFilePath()), Path.of(storagePath));
+
+                StoredFile sf = storedFileService.save(StoredFile.builder()
+                        .checksum(checksum)
+                        .fileType(uploadSession.getFileType())
+                        .mediaType(uploadSession.getMediaType())
+                        .storagePath(storagePath)
+                        .hasThumbnail(false)
+                        .sizeBytes(uploadSession.getTotalSize())
+                        .build());
+
+                MediaAsset mediaAsset = mediaAssetService.createMediaAsset(user, uploadSession.getFilename(), sf);
+
+                repository.deleteById(id);
+                return WriteChunkResult.from(mediaAsset);
+
+            } catch (IOException e) {
+                throw new InternalServerErrorException("An error occured while saving the file");
+            }
+        }
         return WriteChunkResult.from(repository.save(uploadSession));
     }
 

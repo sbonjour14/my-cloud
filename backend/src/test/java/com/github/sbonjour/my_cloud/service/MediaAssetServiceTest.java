@@ -200,7 +200,7 @@ public class MediaAssetServiceTest {
                     .thenReturn(Optional.empty());
             when(mediaAssetRepository.findByOwnerAndStoredFile(owner, sf)).thenReturn(Optional.of(existing));
 
-            when(fileService.calculateChecksum(any())).thenReturn(sf.getChecksum());
+            when(fileService.calculateChecksum(any(MultipartFile.class))).thenReturn(sf.getChecksum());
             when(storedFileService.findByChecksum(anyString())).thenReturn(sf);
 
             assertThatThrownBy(() -> service.uploadFile(file, owner))
@@ -215,7 +215,7 @@ public class MediaAssetServiceTest {
             when(mediaAssetRepository.findByOwnerAndFilenameIgnoringCase(owner, file.getOriginalFilename()))
                     .thenReturn(Optional.empty());
 
-            when(fileService.calculateChecksum(any())).thenReturn(sf.getChecksum());
+            when(fileService.calculateChecksum(any(MultipartFile.class))).thenReturn(sf.getChecksum());
             when(storedFileService.findByChecksum(anyString())).thenReturn(null);
 
             when(fileService.write(any(), any(), any(), any())).thenThrow(new IOException("disk full"));
