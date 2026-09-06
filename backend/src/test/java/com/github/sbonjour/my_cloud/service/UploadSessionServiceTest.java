@@ -25,7 +25,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,7 +40,6 @@ import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InvalidInputException;
 import com.github.sbonjour.my_cloud.exception.NotFoundException;
 import com.github.sbonjour.my_cloud.repository.UploadSessionRepository;
-import com.github.sbonjour.my_cloud.service.UploadSessionService.WriteChunkResult;
 import com.github.sbonjour.my_cloud.service.UploadSessionService.InitUploadResult;
 
 @ExtendWith(MockitoExtension.class)
@@ -281,18 +279,16 @@ public class UploadSessionServiceTest {
                 when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
                 when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
 
-                WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 0L, 9L, user);
+                UploadSession result = service.writeChunk(us.getId(), mockFile, 0L, 9L, user);
 
                 verify(fileService).writeChunk(any(), anyLong(), any()); 
                 verify(repository).findById(eq(us.getId()));
 
                 assertThat(result).isNotNull();
-                assertThat(result.uploadSession().getId()).isEqualTo(us.getId());
-                assertThat(result.uploadSession().getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(0, 9));
-                assertThat(result.uploadSession().getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
-                assertThat(result.uploadSession().getUploadedSize()).isEqualTo(mockFile.getSize());
-                
-                assertThat(result.status()).isEqualTo(HttpStatus.CREATED);
+                assertThat(result.getId()).isEqualTo(us.getId());
+                assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(0, 9));
+                assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
+                assertThat(result.getUploadedSize()).isEqualTo(mockFile.getSize());
             }
 
             @Test
@@ -304,18 +300,16 @@ public class UploadSessionServiceTest {
                 when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
                 when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
 
-                WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 20L, 29L, user);
+                UploadSession result = service.writeChunk(us.getId(), mockFile, 20L, 29L, user);
 
                 verify(fileService).writeChunk(eq(mockFile), eq(20L), eq(Path.of(us.getTempFilePath())));
                 verify(repository).findById(eq(us.getId()));
 
                 assertThat(result).isNotNull();
-                assertThat(result.uploadSession().getId()).isEqualTo(us.getId());
-                assertThat(result.uploadSession().getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(20L, 29L));
-                assertThat(result.uploadSession().getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
-                assertThat(result.uploadSession().getUploadedSize()).isEqualTo(mockFile.getSize());
-
-                assertThat(result.status()).isEqualTo(HttpStatus.CREATED);
+                assertThat(result.getId()).isEqualTo(us.getId());
+                assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(20L, 29L));
+                assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
+                assertThat(result.getUploadedSize()).isEqualTo(mockFile.getSize());
             }
 
             @Test
@@ -326,18 +320,16 @@ public class UploadSessionServiceTest {
                 when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
                 when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
 
-                WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 90L, 98L, user);
+                UploadSession result = service.writeChunk(us.getId(), mockFile, 90L, 98L, user);
 
                 verify(fileService).writeChunk(eq(mockFile), eq(90L), eq(Path.of(us.getTempFilePath())));
                 verify(repository).findById(eq(us.getId()));
 
                 assertThat(result).isNotNull();
-                assertThat(result.uploadSession().getId()).isEqualTo(us.getId());
-                assertThat(result.uploadSession().getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(90L, 98L));
-                assertThat(result.uploadSession().getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
-                assertThat(result.uploadSession().getUploadedSize()).isEqualTo(9L);
-
-                assertThat(result.status()).isEqualTo(HttpStatus.CREATED);
+                assertThat(result.getId()).isEqualTo(us.getId());
+                assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(90L, 98L));
+                assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
+                assertThat(result.getUploadedSize()).isEqualTo(9L);
             }
 
             @Test
@@ -406,18 +398,16 @@ public class UploadSessionServiceTest {
                 when(repository.save(any())).thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
                 when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
 
-                WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 10L, 19L, user);
+                UploadSession result = service.writeChunk(us.getId(), mockFile, 10L, 19L, user);
 
                 verify(repository).findById(eq(us.getId()));
                 verify(fileService).writeChunk(eq(mockFile), eq(10L), eq(Path.of(us.getTempFilePath())));
 
-                verify(repository).save(result.uploadSession());
-                assertThat(result.uploadSession().getUploadedRanges()).containsExactlyInAnyOrder(
+                verify(repository).save(result);
+                assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(
                         new BytesRange(0L, 9L),
                         new BytesRange(10L, 19L));
-                assertThat(result.uploadSession().getUploadedSize()).isEqualTo(20L);
-
-                assertThat(result.status()).isEqualTo(HttpStatus.CREATED);
+                assertThat(result.getUploadedSize()).isEqualTo(20L);
             }
 
             @Test

@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -36,7 +35,6 @@ public class UploadSessionService {
     private final StoredFileService storedFileService;
     private final FileService fileService;
 
-
     @Value("${upload.chunk-size.image:1048576}")
     private long imageChunkSize;
 
@@ -44,6 +42,14 @@ public class UploadSessionService {
     private long videoChunkSize;
     @Value("${file.storage.path:/app/uploads}")
     private String uploadPath;
+
+    public UploadSession findById(UUID id, User user) {
+        UploadSession us = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Upload session not found: " + id));
+        if (!us.getUser().getId().equals(user.getId()))
+            throw new AccessDeniedException("You do not have access to this upload session");
+        return us;
+    }
 
     public UploadSession findByChecksumAndUser(String checksum, User user) {
         return repository.findByChecksumAndUser(checksum, user).orElse(null);
@@ -81,53 +87,53 @@ public class UploadSessionService {
         return InitUploadResult.from(uploadSession);
     }
 
-    private WriteChunkResult setPausedSaveAndThrow(UploadSession us, RuntimeException exception) {
+    private void setPausedSaveAndThrow(UploadSession us, RuntimeException exception) {
         us.setStatus(UploadSessionStatus.PAUSED);
         repository.save(us);
         throw exception;
     }
 
-
-    public WriteChunkResult writeChunk(UUID id, MultipartFile file, long start, long end, User user) {
+    public UploadSession writeChunk(UUID id, MultipartFile file, long start, long end, User user) {
         long fileSize = file.getSize();
 
-        if(end - start + 1 != fileSize)
+        if (end - start + 1 != fileSize)
             throw new InvalidInputException("the chunk size should be equal to " + (end - start + 1));
 
-        
-        UploadSession uploadSession = repository.findById(id).orElseThrow(() -> new NotFoundException("The uploadSession with id: " + id.toString() + " not found"));
+        UploadSession uploadSession = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("The uploadSession with id: " + id.toString() + " not found"));
 
-        if(!uploadSession.getUser().getId().equals(user.getId()))
+        if (!uploadSession.getUser().getId().equals(user.getId()))
             throw new AccessDeniedException("You are not allowed to have access to this resource");
 
-        if(!uploadSession.isRangeValid(start, end))
-            throw new RangeNotSatisfiableException("the range must be between 0 and " + (uploadSession.getTotalSize()-1));
+        if (!uploadSession.isRangeValid(start, end))
+            throw new RangeNotSatisfiableException(
+                    "the range must be between 0 and " + (uploadSession.getTotalSize() - 1));
 
         long chunkSize = fileService.getFileType(file) == FileType.IMAGE ? imageChunkSize : videoChunkSize;
         boolean isLastChunk = end == uploadSession.getTotalSize() - 1;
 
-        if(fileSize != chunkSize && !isLastChunk)
-            setPausedSaveAndThrow(uploadSession, new InvalidInputException("the chunk size shoud be equal to " + chunkSize));
+        if (fileSize != chunkSize && !isLastChunk)
+            setPausedSaveAndThrow(uploadSession,
+                    new InvalidInputException("the chunk size shoud be equal to " + chunkSize));
 
-        if(isLastChunk && fileSize > chunkSize)
-            setPausedSaveAndThrow(uploadSession, new ConflictException("the chunk size shoud less than or equal to " + chunkSize));
+        if (isLastChunk && fileSize > chunkSize)
+            setPausedSaveAndThrow(uploadSession,
+                    new ConflictException("the chunk size shoud less than or equal to " + chunkSize));
 
         if (uploadSession.hasOverlapWith(start, end)) {
             setPausedSaveAndThrow(uploadSession, new ConflictException("Chunk overlaps with an existing range"));
-}
-
+        }
 
         boolean success = fileService.writeChunk(file, start, Path.of(uploadSession.getTempFilePath()));
-        
-        if(!success)
+
+        if (!success)
             throw new InternalServerErrorException("error while uploading the chunk");
 
-        uploadSession.addRange(start, end);;
+        uploadSession.addRange(start, end);
+        ;
         uploadSession.addUploadedSize(fileSize);
 
-        repository.save(uploadSession);
-
-        return WriteChunkResult.from(uploadSession, HttpStatus.CREATED, "OK");
+        return repository.save(uploadSession);
     }
 
     public UploadSession getUploadSession(UUID id) {
@@ -141,12 +147,6 @@ public class UploadSessionService {
 
         protected static InitUploadResult from(UploadSession us) {
             return new InitUploadResult(false, us, null);
-        }
-    }
-
-    public record WriteChunkResult(UploadSession uploadSession, HttpStatus status, String message) {
-        private static WriteChunkResult from(UploadSession us, HttpStatus status, String message) {
-            return new WriteChunkResult(us, status, message);
         }
     }
 
