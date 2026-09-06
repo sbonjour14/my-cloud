@@ -27,6 +27,7 @@ import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.service.FileService;
 import com.github.sbonjour.my_cloud.service.UploadSessionService;
 import com.github.sbonjour.my_cloud.service.UploadSessionService.InitUploadResult;
+import com.github.sbonjour.my_cloud.service.UploadSessionService.WriteChunkResult;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -67,10 +68,10 @@ public class UploadSessionController {
         long start = Long.parseLong(matcher.group(1));
         long end = Long.parseLong(matcher.group(2));
 
-        UploadSession us = uploadSessionService.writeChunk(id, chunk, start, end, user);
+        WriteChunkResult result = uploadSessionService.writeChunk(id, chunk, start, end, user);
 
-        if(us.getStatus().equals(UploadSessionStatus.COMPLETE))
-            return ResponseEntity.status(HttpStatus.CREATED).body(us.getUrl());
+        if(result.uploadSession().getStatus().equals(UploadSessionStatus.COMPLETE))
+            return ResponseEntity.status(HttpStatus.CREATED).body(result.mediaAsset().getUrl());
         return ResponseEntity.ok(null);
     }
 

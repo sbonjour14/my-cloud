@@ -31,6 +31,7 @@ import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
 import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InvalidInputException;
 import com.github.sbonjour.my_cloud.exception.NotFoundException;
+import com.github.sbonjour.my_cloud.service.UploadSessionService.WriteChunkResult;
 
 public class UploadSessionServiceWriteChunkTest extends UploadSessionServiceTest {
     @Nested
@@ -68,16 +69,19 @@ public class UploadSessionServiceWriteChunkTest extends UploadSessionServiceTest
                     .thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
             when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
 
-            UploadSession result = service.writeChunk(us.getId(), mockFile, 0L, 9L, user);
+            WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 0L, 9L, user);
 
             verify(fileService).writeChunk(any(), anyLong(), any());
             verify(repository).findById(eq(us.getId()));
 
             assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(us.getId());
-            assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(0, 9));
-            assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
-            assertThat(result.getUploadedSize()).isEqualTo(mockFile.getSize());
+            assertThat(result.uploadSession()).isNotNull();
+            assertThat(result.uploadSession().getId()).isEqualTo(us.getId());
+            assertThat(result.uploadSession().getUploadedRanges()).containsExactlyInAnyOrder(new BytesRange(0, 9));
+            assertThat(result.uploadSession().getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
+            assertThat(result.uploadSession().getUploadedSize()).isEqualTo(mockFile.getSize());
+
+            assertThat(result.mediaAsset()).isNull();
         }
 
         @Test
@@ -91,18 +95,20 @@ public class UploadSessionServiceWriteChunkTest extends UploadSessionServiceTest
                     .thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
             when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
 
-            UploadSession result = service.writeChunk(us.getId(), mockFile, 20L, 29L, user);
+            WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 20L, 29L, user);
 
             verify(fileService).writeChunk(eq(mockFile), eq(20L),
                     eq(Path.of(us.getTempFilePath())));
             verify(repository).findById(eq(us.getId()));
 
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(us.getId());
-            assertThat(result.getUploadedRanges())
+            assertThat(result.uploadSession()).isNotNull();
+            assertThat(result.uploadSession().getId()).isEqualTo(us.getId());
+            assertThat(result.uploadSession().getUploadedRanges())
                     .containsExactlyInAnyOrder(new BytesRange(20L, 29L));
-            assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
-            assertThat(result.getUploadedSize()).isEqualTo(mockFile.getSize());
+            assertThat(result.uploadSession().getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
+            assertThat(result.uploadSession().getUploadedSize()).isEqualTo(mockFile.getSize());
+
+            assertThat(result.mediaAsset()).isNull();
         }
 
         @Test
@@ -115,18 +121,20 @@ public class UploadSessionServiceWriteChunkTest extends UploadSessionServiceTest
                     .thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
             when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
 
-            UploadSession result = service.writeChunk(us.getId(), mockFile, 90L, 98L, user);
+            WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 90L, 98L, user);
 
             verify(fileService).writeChunk(eq(mockFile), eq(90L),
                     eq(Path.of(us.getTempFilePath())));
             verify(repository).findById(eq(us.getId()));
 
             assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(us.getId());
-            assertThat(result.getUploadedRanges())
+            assertThat(result.uploadSession().getId()).isEqualTo(us.getId());
+            assertThat(result.uploadSession().getUploadedRanges())
                     .containsExactlyInAnyOrder(new BytesRange(90L, 98L));
-            assertThat(result.getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
-            assertThat(result.getUploadedSize()).isEqualTo(9L);
+            assertThat(result.uploadSession().getStatus()).isEqualTo(UploadSessionStatus.UPLOADING);
+            assertThat(result.uploadSession().getUploadedSize()).isEqualTo(9L);
+            
+            assertThat(result.mediaAsset()).isNull();
         }
 
         @Test
@@ -203,17 +211,18 @@ public class UploadSessionServiceWriteChunkTest extends UploadSessionServiceTest
                     .thenAnswer(invocation -> invocation.<UploadSession>getArgument(0));
             when(fileService.writeChunk(any(), anyLong(), any(Path.class))).thenReturn(true);
 
-            UploadSession result = service.writeChunk(us.getId(), mockFile, 10L, 19L, user);
+            WriteChunkResult result = service.writeChunk(us.getId(), mockFile, 10L, 19L, user);
 
             verify(repository).findById(eq(us.getId()));
             verify(fileService).writeChunk(eq(mockFile), eq(10L),
                     eq(Path.of(us.getTempFilePath())));
 
-            verify(repository).save(result);
-            assertThat(result.getUploadedRanges()).containsExactlyInAnyOrder(
+            verify(repository).save(result.uploadSession());
+            assertThat(result.uploadSession().getUploadedRanges()).containsExactlyInAnyOrder(
                     new BytesRange(0L, 9L),
                     new BytesRange(10L, 19L));
-            assertThat(result.getUploadedSize()).isEqualTo(20L);
+            assertThat(result.uploadSession().getUploadedSize()).isEqualTo(20L);
+            assertThat(result.mediaAsset()).isNull();
         }
 
         @Test

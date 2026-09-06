@@ -93,7 +93,7 @@ public class UploadSessionService {
         throw exception;
     }
 
-    public UploadSession writeChunk(UUID id, MultipartFile file, long start, long end, User user) {
+    public WriteChunkResult writeChunk(UUID id, MultipartFile file, long start, long end, User user) {
         long fileSize = file.getSize();
 
         if (end - start + 1 != fileSize)
@@ -133,7 +133,7 @@ public class UploadSessionService {
         ;
         uploadSession.addUploadedSize(fileSize);
 
-        return repository.save(uploadSession);
+        return WriteChunkResult.from(repository.save(uploadSession));
     }
 
     public UploadSession getUploadSession(UUID id) {
@@ -147,6 +147,15 @@ public class UploadSessionService {
 
         protected static InitUploadResult from(UploadSession us) {
             return new InitUploadResult(false, us, null);
+        }
+    }
+
+    public record WriteChunkResult(UploadSession uploadSession, MediaAsset mediaAsset) {
+        static WriteChunkResult from(UploadSession us) {
+            return new WriteChunkResult(us, null);
+        }
+        static WriteChunkResult from(UploadSession us, MediaAsset ma) {
+            return new WriteChunkResult(us, ma);
         }
     }
 
