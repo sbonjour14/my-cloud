@@ -10,11 +10,15 @@ import { CloudIcon } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { useStorageUsage } from "@/hooks/useStorageUsage";
 import { Image } from "lucide-react";
+import { useUpload } from "@/provider/uploadProvider";
 
 export function TestPage() {
     const navigate = useNavigate();
     const { upload } = useUploadFile();
     const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef2 = useRef<HTMLInputElement>(null);
+
+    const {upload: uploadFile, cancel, pause} = useUpload();
 
     const {data: me, isLoading: meLoading} = useUser();
     const {data: mediaAssets, isLoading: mediaLoading} = useMediaAssets();
@@ -30,6 +34,14 @@ export function TestPage() {
         event.target.value = "";
     };
 
+    const handleFileChange2 = (event: React.ChangeEvent<HTMLInputElement>) => {
+        console.log("handleFileChange2");
+        const fichier = event.target.files?.[0];
+        if (!fichier) return;
+        uploadFile(fichier);
+        event.target.value = "";
+    }
+
     return (
         <div className="w-full min-h-screen flex flex-col gap-5 items-center">
             <Link to={"/register"}> go to register</Link>
@@ -40,13 +52,37 @@ export function TestPage() {
                 type="file"
                 onChange={handleFileChange}
             />
-            <Button onClick={() => inputRef.current?.click()}>
-                chose a file
-            </Button>
-
+            <input
+                ref={inputRef2}
+                className="hidden"
+                type="file"
+                onChange={handleFileChange2}
+            />
             <Button onClick={async () => {await logoutUser(); navigate("/login")}}>
                 log out
             </Button>
+
+
+            <Button onClick={() => inputRef2.current?.click()}>
+                upload file with useUpload (chunks)
+            </Button>
+
+            <Button onClick={pause}>
+                pause upload
+            </Button>
+
+            <Button onClick={cancel}>
+                cancel upload
+            </Button>
+
+            <div>
+                user : {me?.displayName}
+            </div>
+
+            <div>
+                user id : {me?.id}
+            </div>
+
 
             <div>
                 storage : {((storageUsed?? 0) / 1000000).toFixed(2)}MB
@@ -80,6 +116,7 @@ export function TestPage() {
 
 
                     :
+                    <>
                         <div className="mt-5 grid grid-cols-2 gap-3">
                             {mediaAssets.map((ma, idx) => (
                                 <div key={idx}>
@@ -97,6 +134,15 @@ export function TestPage() {
                                 </div>
                             ))}
                         </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => inputRef.current?.click()}
+                            >
+                                Upload more 
+                            </Button>
+
+                    </>
             }
 
         </div>
