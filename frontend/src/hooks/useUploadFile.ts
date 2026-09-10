@@ -24,7 +24,7 @@ export function useUploadFile() {
             )
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["storage"] })
+            queryClient.invalidateQueries({ queryKey: ["uploads"] })
         },
     })
 

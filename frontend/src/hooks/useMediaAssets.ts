@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getMediaAssets } from "@/lib/http-api/media"
 
 export const mediaAssetsKeys = {
-    all: ["storage", "all"] as const,
+    all: ["uploads", "all"] as const,
 }
 
 export function useMediaAssets() {
