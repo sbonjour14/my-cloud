@@ -1,85 +1,59 @@
-import { api } from "@/lib/axios";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { createContext, useContext, useRef, type ReactNode } from "react";
-import { createSHA256 } from "hash-wasm";
+import { createContext, useContext, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { getChunkSizeof, getNonUploadedRanges } from "@/utils/upload";
 import axios from "axios";
+import { uploadInit } from "@/lib/http-api/upload/uploadInit";
+import type { ByteRange, UploadSessionResponse, UploadSessionStatus } from "@/types";
+import { getUpload } from "@/lib/http-api/upload/getUpload";
+import { uploadChunk } from "@/lib/http-api/upload/uploadChunks";
 
-const chunkSize: number = 1024*1024*2;
-
-type ByteRange = {
-    startByte : number;
-    endByte : number;
-}
-
-// return the ranges that are not yet uploaded
-// ranges : the ranges that are already uploaded
-function getStart(ranges: ByteRange[], totalSize: number) : ByteRange[] {
-    const res : ByteRange[]= [];
-    let i = 0;
-    let start = 0;
-    let end = start + chunkSize - 1;
-    while (i < ranges.length) {
-        const range = ranges[i];
-        if(end < range.startByte) {
-            res.push({startByte: start, endByte: end});
-            start = end + 1;
-            end = start + chunkSize - 1;
-        } else {
-            start = range.endByte + 1;
-            end = start + chunkSize - 1;
-            i++;
-        }
-    }
-    while(start < totalSize) {
-        res.push({startByte: start, endByte: Math.min(end, totalSize - 1)});
-        start = end + 1;
-        end = start + chunkSize - 1;
-    }
-    return res;
-}
-
-async function sha256Stream(file: File, chunkSize: number): Promise<string> {
-  const hasher = await createSHA256();
-  hasher.init();
-
-  for (let offset = 0; offset < file.size; offset += chunkSize) {
-    const chunk = file.slice(offset, offset + chunkSize);
-    const buffer = await chunk.arrayBuffer();
-    hasher.update(new Uint8Array(buffer));
-  }
-
-  return hasher.digest("hex");
+export type UploadItem = {
+    id: string;
+    uploadId?: string,
+    name: string;
+    status: UploadSessionStatus | "CANCELED" | "LOADING";
+    uploadedSize: number;
+    totalSize: number;
+    abortController: AbortController;
 }
 
 
-async function uploadChunks(file: File, signal : AbortSignal, ranges: ByteRange[], url: string) {
+async function uploadChunks(id : string, uploadId: string, file: File, signal : AbortSignal, ranges: ByteRange[], setUploads: Dispatch<SetStateAction<UploadItem[]>>) {
     console.log("uploading: ", file.name)
-
     let size = file.size;
     let start: number; let end: number;
-    let notUploadedRanges = getStart(ranges, size);
     let i = 0;
+
+    let notUploadedRanges = getNonUploadedRanges(ranges, size, getChunkSizeof(file));
+
     while(!signal.aborted) {
         console.log("uploading chunk ", i, " of ", notUploadedRanges.length);
         if(i >= notUploadedRanges.length) {
             break;
         }
-        start = notUploadedRanges[i].startByte;
-        end = notUploadedRanges[i].endByte;
+        start = notUploadedRanges[i].byteStart;
+        end = notUploadedRanges[i].byteEnd;
         i++;
         let chunk: Blob = file.slice(start, Math.min(end+1, size), file.type);
         let formdata: FormData = new FormData();
         formdata.append("chunk", chunk);
         try {
-            const result = await api.post(url, formdata, {signal,  headers: {"Content-Range": `bytes ${start}-${end}/${size}`}});
-            if (result.status === 200)
+            const result= await uploadChunk(uploadId, file, start, end, signal);
+            if (result.status === 200) {
                 console.log("chunk success")
+            }
             else if (result.status === 201) {
                 console.log("file uploaded")
             }
+            setUploads(prev => prev.map(item => {
+                if (item.id == id) {
+                    return { ...item, uploadedSize: item.uploadedSize + chunk.size }
+                }
+                return item;
+            }))
 
         } catch (error) {
-            if (axios.isAxiosError(error)) {
+            if (axios.isAxiosError(error) && !signal.aborted) {
                 alert("upload failed, please retry");
                 return;
             }
@@ -89,29 +63,48 @@ async function uploadChunks(file: File, signal : AbortSignal, ranges: ByteRange[
         console.log("upload aborted");
         return;
     }
+    setUploads(prev => prev.map(item => {
+        if(item.id == id) {
+            return {...item, uploadedSize: item.totalSize, status: "COMPLETE"};
+        }
+        return item;
+    }))
     console.log("done!");
 }
 
 
-async function init(file: File, signal: AbortSignal) {
-    const checksum: string = await sha256Stream(file, chunkSize);
+async function init(file: File, abortController: AbortController, setUploads: Dispatch<SetStateAction<UploadItem[]>>, files: Map<String, File>) {
+    const newItem: UploadItem = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        status: "LOADING",
+        totalSize: file.size,
+        uploadedSize: 0,
+        abortController: abortController
+    };
+    // add new upload item to list for ui
+    setUploads(prev => [...prev, newItem]);
     try {
-        const res = await api.post("/uploads/init", {
-            filename: file.name,
-            mediaType: file.type,
-            totalSize: file.size,
-            checksum: checksum
-        })
-        const data: { fileAlreadyExists: boolean, url: string } = res.data;
+        const data = await uploadInit(file);
+
         console.log("file already exists: ", data.fileAlreadyExists, " url: ", data.url);
+
         if (data.fileAlreadyExists) {
-            alert(data.url);
             return;
         }
-        const res2 = await api.get(data.url);
-        const data2: { status: string, totalSize: number, uploadedSize: number, uploadedRanges: ByteRange[] } = res2.data;
-        if (res2.status === 200 && data2.status === "UPLOADING") {
-            await uploadChunks(file, signal, data2.uploadedRanges, data.url)
+        const uploadId = data.url.split("/").pop()!;
+        setUploads(prev => prev.map(item => {
+            if(item.id === newItem.id)
+                return { ...item, uploadId: uploadId, status: "UPLOADING"};
+            return item;
+        }))
+        // save file before starting upload of chunks
+        files.set(newItem.id, file);
+
+        const upload: UploadSessionResponse = await getUpload(uploadId);
+
+        if (upload.status === "UPLOADING") {
+            await uploadChunks(newItem.id, uploadId,file, abortController.signal, upload.uploadedRanges, setUploads)
         } else {
             alert("upload failed, please retry");
         }
@@ -124,30 +117,65 @@ async function init(file: File, signal: AbortSignal) {
     }
 }
 
+
 const UploadContext = createContext<{
     upload: (file: File) => void;
-    pause: () => void;
-    cancel: () => void;
+    pause: (id: string) => void;
+    cancel: (id: string) => void;
+    resume: (id: string) => void;
+    close: (id: string) => void;
+    uploads: UploadItem[];
+
 } | null>(null);
 
 
 export function UploadProvider({children}: {children: ReactNode}) {
     const queryClient = useQueryClient();
-    const abortControllerRef = useRef<AbortController | null>(null);
-
+    const [uploads, setUploads] = useState<UploadItem[]>([]);
+    const files  = useRef<Map<String, File>>(new Map());
     const mutation = useMutation({
         mutationFn: (file: File) => {
-            abortControllerRef.current = new AbortController();
-            return init(file, abortControllerRef.current.signal);
+            return init(file, new AbortController(), setUploads, files.current);
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["uploads"] }),
     });
+
     return (
         <UploadContext.Provider
             value={{
-                upload: (file) => mutation.mutate(file),
-                pause: () => {abortControllerRef.current?.abort()},
-                cancel: () => {abortControllerRef.current?.abort(); mutation.reset()},
+                upload: (file: File) => {
+                    mutation.mutate(file)
+                },
+                pause: (id: string) => {
+                    setUploads(prev => prev.map(item => {
+                            if (item.id === id) {
+                                item.abortController.abort();
+                                return { ...item, status: "PAUSED" };
+                            }
+                            return item;
+                        })
+                    );
+
+                },
+                cancel: (id: string) =>  { // id or name
+                    setUploads(prev => prev.filter(item => {
+                        if(item.id === id || item.name === id) {
+                            item.abortController.abort();
+                            files.current.delete(id);
+                            return false;
+                        }
+                        return true;
+                    }))
+                },
+                resume: (id: string) => {
+                    console.log("resume: ", id);                    
+                },
+
+
+                close: (id: string) => {
+                    console.log("close: ", id);
+                },
+                uploads: uploads,
             }}
         >
             {children}
