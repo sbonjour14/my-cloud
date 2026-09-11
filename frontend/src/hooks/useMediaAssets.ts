@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query"
-import { getMediaAssets } from "@/lib/http-api/media"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { deleteMediaAsset, getMediaAssets } from "@/lib/http-api/media"
 
 export const mediaAssetsKeys = {
-    all: ["uploads", "all"] as const,
+    all: ["uploads"] as const,
 }
 
 export function useMediaAssets() {
@@ -17,4 +17,18 @@ export function useMediaAssets() {
     })
 }
 
+export function useDeleteMediaAsset() {
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: (id: string) => deleteMediaAsset(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: mediaAssetsKeys.all });
+            mutation.reset();
+        },
+    });
+
+    return {
+        deleteAsset: mutation.mutate
+    }
+}
 
