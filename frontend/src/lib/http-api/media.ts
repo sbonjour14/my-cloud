@@ -24,3 +24,7 @@ export async function getMediaAssets() : Promise<MediaAssetResponse[]> {
 	const {data: response } = await api.get("/mediaAssets");
 	return response as MediaAssetResponse[];
 }
+
+export async function deleteMediaAsset(id: string) : Promise<void> {
+	await api.delete("/mediaAssets/" + id);
+}
