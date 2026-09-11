@@ -1,16 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
-import { useMediaAssets } from "@/hooks/useMediaAssets";
+import { useDeleteMediaAsset, useMediaAssets } from "@/hooks/useMediaAssets";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import { logoutUser } from "@/lib/http-api/auth";
-import { useRef } from "react";
+import { useRef} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CloudIcon } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { useStorageUsage } from "@/hooks/useStorageUsage";
 import { Image } from "lucide-react";
-import { useUpload } from "@/provider/uploadProvider";
+import { useUpload, type UploadItem } from "@/provider/uploadProvider";
 
 export function TestPage() {
     const navigate = useNavigate();
@@ -18,11 +18,13 @@ export function TestPage() {
     const inputRef = useRef<HTMLInputElement>(null);
     const inputRef2 = useRef<HTMLInputElement>(null);
 
-    const {upload: uploadFile, cancel, pause} = useUpload();
+    const {upload: uploadFile, cancel, pause, uploads} = useUpload();
 
     const {data: me, isLoading: meLoading} = useUser();
     const {data: mediaAssets, isLoading: mediaLoading} = useMediaAssets();
     const {data: storageUsed, isLoading: storageLoading} = useStorageUsage(me?.id);
+
+    const {deleteAsset}= useDeleteMediaAsset();
 
 
     const isLoading = meLoading && mediaLoading && storageLoading;
@@ -40,6 +42,16 @@ export function TestPage() {
         if (!fichier) return;
         uploadFile(fichier);
         event.target.value = "";
+    }
+
+    function handleDeleteMediaAsset(id: string, filename: string) {
+        try {
+            console.log("deleting: ",filename);
+            cancel(filename);
+            deleteAsset(id);   
+        } catch (error) {
+            console.error("Error deleting media asset:", error);
+        }
     }
 
     return (
@@ -67,14 +79,6 @@ export function TestPage() {
                 upload file with useUpload (chunks)
             </Button>
 
-            <Button onClick={pause}>
-                pause upload
-            </Button>
-
-            <Button onClick={cancel}>
-                cancel upload
-            </Button>
-
             <div>
                 user : {me?.displayName}
             </div>
@@ -86,6 +90,32 @@ export function TestPage() {
 
             <div>
                 storage : {((storageUsed?? 0) / 1000000).toFixed(2)}MB
+            </div>
+
+            <div className= "grid grid-cols-2 gap-3">
+                {
+                    Array.from(uploads.values()).map((uploadItem: UploadItem) => {
+                        console.log("uploadItem: ", uploadItem);
+                        if(uploadItem.status === "LOADING")
+                            return <div key={uploadItem.id} className="flex flex-col gap-2"> <Spinner/></div>
+                        return (
+                        <div key={uploadItem.id} className="flex flex-col gap-2">
+                            <div>file name : {uploadItem.name}</div>
+                            <div>status : {uploadItem.status}</div>
+                            <div>uploaded size : {uploadItem.uploadedSize}</div>
+                            <div>total size : {uploadItem.totalSize}</div>
+                            <div>
+                                <div>progress: {((uploadItem.uploadedSize / uploadItem.totalSize) * 100).toFixed(2)}%</div>
+                                <Button onClick={() => pause(uploadItem.id)}>
+                                    pause
+                                </Button>
+                                <Button onClick={() => cancel(uploadItem.id)}>
+                                    cancel
+                                </Button>
+                            </div>
+                        </div>
+                    )})
+                }
             </div>
 
             {
@@ -131,6 +161,12 @@ export function TestPage() {
                                                 <Image className="h-10 w-10 text-muted-foreground/40" strokeWidth={1.5} />
                                             </div>
                                     }
+                                    <div className="text-sm text-muted-foreground">{ma.filename}</div>
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => handleDeleteMediaAsset(ma.id, ma.filename)}
+                                    >delete</Button>
                                 </div>
                             ))}
                         </div>
