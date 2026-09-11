@@ -28,9 +28,24 @@ export type UserResponse = {
 }
 
 export type MediaAssetResponse = {
+  id: string,
   filename: string,
   url: string
   thumbnailUrl: string,
   createdAt: string,
   hasThumbnail: boolean,
+}
+
+export type ByteRange = {
+  byteStart: number,
+  byteEnd: number
+}
+
+export type UploadSessionStatus =  "UPLOADING" | "PAUSED" | "COMPLETE"
+
+export type UploadSessionResponse = {
+  status: UploadSessionStatus,
+  totalSize: number,
+  uploadedSize: number,
+  uploadedRanges: ByteRange[]
 }
