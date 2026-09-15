@@ -13,11 +13,6 @@ console.log(apiUrl);
 api.interceptors.response.use(
     (res) => res,
     (error) => {
-        const isAuthRoute = error.config?.url?.includes("/auth/login") || error.config?.url?.includes("/auth/register");
-
-        if (error.response?.status === 401 && !isAuthRoute) {
-            window.location.href = "/login";
-        }
         return Promise.reject(error);
     }
 );

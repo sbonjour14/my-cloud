@@ -27,7 +27,7 @@ export function ProtectedRoute() {
         return null;
 
     if(!isValid)
-        return <Navigate to={"/login"} replace/>
+        return <Navigate to={"/401"} replace/>
 
     return <Outlet/>
     

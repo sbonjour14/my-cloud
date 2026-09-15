@@ -4,13 +4,14 @@ import { Spinner } from "@/components/ui/spinner";
 import { useDeleteMediaAsset, useMediaAssets } from "@/hooks/useMediaAssets";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import { logoutUser } from "@/lib/http-api/auth";
-import { useRef} from "react";
+import { useCallback, useRef} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CloudIcon } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { useStorageUsage } from "@/hooks/useStorageUsage";
 import { Image } from "lucide-react";
-import { useUpload, type UploadItem } from "@/provider/uploadProvider";
+import { useUpload, type UploadSession } from "@/provider/";
+import { UploadItem } from "@/components/upload/uploadItem";
 
 export function TestPage() {
     const navigate = useNavigate();
@@ -18,7 +19,11 @@ export function TestPage() {
     const inputRef = useRef<HTMLInputElement>(null);
     const inputRef2 = useRef<HTMLInputElement>(null);
 
-    const {upload: uploadFile, cancel, pause, uploads} = useUpload();
+    const {upload: uploadFile, cancel, pause, resume, uploads} = useUpload();
+
+    const onPause = useCallback((item: UploadSession) => {console.log("PAUSE: ", item); pause(item); }, []);
+    const onResume = useCallback((item: UploadSession) => {console.log("RESUME: ", item); resume(item); }, []);
+    const onCancel = useCallback((item : UploadSession) => {console.log("CANCEL: ", item); cancel(item); }, []);
 
     const {data: me, isLoading: meLoading} = useUser();
     const {data: mediaAssets, isLoading: mediaLoading} = useMediaAssets();
@@ -47,8 +52,9 @@ export function TestPage() {
     function handleDeleteMediaAsset(id: string, filename: string) {
         try {
             console.log("deleting: ",filename);
-            cancel(filename);
-            deleteAsset(id);   
+            const item = uploads.find(i => i.name === filename);
+            if(item)cancel(item);
+            deleteAsset(id);
         } catch (error) {
             console.error("Error deleting media asset:", error);
         }
@@ -94,32 +100,12 @@ export function TestPage() {
 
             <div className= "grid grid-cols-2 gap-3">
                 {
-                    Array.from(uploads.values()).map((uploadItem: UploadItem) => {
-                        console.log("uploadItem: ", uploadItem);
-                        if(uploadItem.status === "LOADING")
-                            return <div key={uploadItem.id} className="flex flex-col gap-2"> <Spinner/></div>
-                        return (
-                        <div key={uploadItem.id} className="flex flex-col gap-2">
-                            <div>file name : {uploadItem.name}</div>
-                            <div>status : {uploadItem.status}</div>
-                            <div>uploaded size : {uploadItem.uploadedSize}</div>
-                            <div>total size : {uploadItem.totalSize}</div>
-                            <div>
-                                <div>progress: {((uploadItem.uploadedSize / uploadItem.totalSize) * 100).toFixed(2)}%</div>
-                                <Button onClick={() => pause(uploadItem.id)}>
-                                    pause
-                                </Button>
-                                <Button onClick={() => cancel(uploadItem.id)}>
-                                    cancel
-                                </Button>
-                            </div>
-                        </div>
-                    )})
+                    uploads.map((uploadItem: UploadSession) => <UploadItem key={uploadItem.id} item={uploadItem} onCancel={onCancel} onPause={onPause} onResume={onResume}/>)
                 }
             </div>
 
             {
-                isLoading ? 
+                isLoading ?
                     <Spinner/> :
 
                     !mediaAssets || mediaAssets.length == 0 ?
@@ -149,6 +135,7 @@ export function TestPage() {
                     <>
                         <div className="mt-5 grid grid-cols-2 gap-3">
                             {mediaAssets.map((ma, idx) => (
+                                uploads.find(i => i.name === ma.filename && !(i.status === "COMPLETE" && i.uploadedSize === i.totalSize)) ? null :
                                 <div key={idx}>
                                     {
                                         ma.hasThumbnail ?
@@ -157,9 +144,9 @@ export function TestPage() {
                                             className="h-40 w-40 object-cover"
                                         />
                                         :
-                                            <div className="h-40 w-40 rounded-lg bg-muted animate-pulse flex items-center justify-center">
-                                                <Image className="h-10 w-10 text-muted-foreground/40" strokeWidth={1.5} />
-                                            </div>
+                                        <div className="h-40 w-40 rounded-lg bg-muted animate-pulse flex items-center justify-center">
+                                            <Image className="h-10 w-10 text-muted-foreground/40" strokeWidth={1.5} />
+                                        </div>
                                     }
                                     <div className="text-sm text-muted-foreground">{ma.filename}</div>
                                     <Button
@@ -175,7 +162,7 @@ export function TestPage() {
                                 size="sm"
                                 onClick={() => inputRef.current?.click()}
                             >
-                                Upload more 
+                                Upload more
                             </Button>
 
                     </>
