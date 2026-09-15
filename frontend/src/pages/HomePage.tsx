@@ -12,16 +12,14 @@ export function HomePage() {
 				<Spinner/>
 			</div>
 		)
+
 	return (
-		<div className="flex-col gap-5 justify-center mt-10">
-			{user?.role === "ADMIN" && <Button variant={"default"}
-				onClick={() => navigate("/test")}
-			>
+		<div>
+			<p>HOME</p>
+			{user?.role === "ADMIN" &&
+			<Button variant={"default"} onClick={() => navigate("/test")}>
 				test
 			</Button>}
-			<div>
-				home page
-			</div>
 		</div>
 	)
 }

@@ -6,7 +6,7 @@ import { useUploadFile } from "@/hooks/useUploadFile";
 import { logoutUser } from "@/lib/http-api/auth";
 import { useCallback, useRef} from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { CloudIcon } from "lucide-react";
+import { CloudIcon, Home } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { useStorageUsage } from "@/hooks/useStorageUsage";
 import { Image } from "lucide-react";
@@ -70,6 +70,9 @@ export function TestPage() {
                 type="file"
                 onChange={handleFileChange}
             />
+            <Button variant={"ghost"} onClick={() => navigate("/")}>
+                <Home/>
+            </Button>
             <input
                 ref={inputRef2}
                 className="hidden"
