@@ -1,10 +1,12 @@
-import { Button } from "@base-ui/react";
-import { Avatar, AvatarFallback} from "./ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
+import AvatarAction from "./avatar-action";
 
 export default function Header() {
-    const {data: user} = useUser();
+    const {data: user, isLoading} = useUser();
+
+    if(isLoading || !user) return null;
     return (
         <div className=" sticky top-0 flex flex-row justify-between items-center h-16 sm:h-20 w-full px-4 border-b border-border mb-5">
             <Button>
@@ -13,9 +15,7 @@ export default function Header() {
             <p>HOME</p>
             {/* hamburger menu */}
             {/* search bar */}
-            <Avatar >
-                <AvatarFallback className={"bg-foreground text-background font-bold"}>{user?.displayName.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <AvatarAction user={user}/>
         </div>
     )
 }
