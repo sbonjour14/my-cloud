@@ -1,3 +1,4 @@
+import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useUser } from "@/hooks/useUser";
@@ -15,7 +16,7 @@ export function HomePage() {
 
 	return (
 		<div>
-			<p>HOME</p>
+			<Header/>
 			{user?.role === "ADMIN" &&
 			<Button variant={"default"} onClick={() => navigate("/test")}>
 				test
