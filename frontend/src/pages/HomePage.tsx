@@ -9,13 +9,13 @@ export function HomePage() {
 	const {data: user, isLoading} = useUser();
 	if(isLoading)
 		return (
-			<div className="flex justify-between items-center">
+			<div className="flex justify-between items-center w-full">
 				<Spinner/>
 			</div>
 		)
 
 	return (
-		<div>
+		<div className="w-full min-h-screen">
 			<Header/>
 			{user?.role === "ADMIN" &&
 			<Button variant={"default"} onClick={() => navigate("/test")}>
