@@ -10,7 +10,7 @@ import { ArrowLeftIcon, CloudIcon, Home } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { useStorageUsage } from "@/hooks/useStorageUsage";
 import { Image } from "lucide-react";
-import { useUpload, type UploadSession } from "@/provider/";
+import { useUpload, type UploadSession } from "@/provider/upload";
 import { UploadItem } from "@/components/upload/uploadItem";
 
 export function TestPage() {

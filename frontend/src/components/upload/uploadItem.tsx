@@ -1,4 +1,4 @@
-import { type UploadSession  } from "@/provider";
+import { type UploadSession  } from "@/provider/upload";
 import { Item, ItemActions, ItemMedia, ItemTitle } from "../ui/item";
 import { Pause, Play, UploadCloudIcon, X } from "lucide-react";
 import { memo } from "react";

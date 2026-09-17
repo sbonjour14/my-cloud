@@ -6,7 +6,7 @@ import { uploadInit } from "@/lib/http-api/upload/uploadInit";
 import type { ByteRange, UploadSessionResponse } from "@/types";
 import { getUpload } from "@/lib/http-api/upload/getUpload";
 import { uploadChunk } from "@/lib/http-api/upload/uploadChunks";
-import { UploadContext, type UploadSession } from "@/provider";
+import { UploadContext, type UploadSession } from "@/provider/upload";
 
 export function UploadProvider({ children }: { children: ReactNode }) {
     const queryClient = useQueryClient();
