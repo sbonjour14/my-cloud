@@ -20,11 +20,23 @@ export async function uploadFile(file: File): Promise<MediaAssetResponse> {
 }
 
 
-export async function getMediaAssets() : Promise<MediaAssetResponse[]> {
-	const {data: response } = await api.get("/mediaAssets");
+export async function getMediaAssets(page: number, size: number, order: "ASC" | "DESC") : Promise<MediaAssetResponse[]> {
+	const {data: response } = await api.get("/mediaAssets", {
+		params: {
+			page,
+			size,
+			order
+		}
+	});
 	return response as MediaAssetResponse[];
 }
 
 export async function deleteMediaAsset(id: string) : Promise<void> {
 	await api.delete("/mediaAssets/" + id);
+}
+
+
+export async function getCount() : Promise<number> {
+	const {data: response} = await api.get("/mediaAssets/count")
+	return response;
 }

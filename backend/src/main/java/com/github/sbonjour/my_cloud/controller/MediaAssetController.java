@@ -59,14 +59,24 @@ public class MediaAssetController {
      */
 
     @GetMapping("/mediaAssets")
-    public ResponseEntity<List<MediaAssetResponse>> getMediaAssets(@AuthenticationPrincipal User user) {
-        List<MediaAsset> mediaAssets = mediaAssetService.getAll(user);
+    public ResponseEntity<List<MediaAssetResponse>> getMediaAssets(@AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "DESC") OrderValues order) {
+
+        List<MediaAsset> mediaAssets = mediaAssetService.getPaginated(user, page, size, order.equals(OrderValues.ASC));
 
         List<MediaAssetResponse> response = mediaAssets.stream()
                 .map(MediaAssetResponse::fromEntity)
                 .toList();
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("mediaAssets/count")
+    public ResponseEntity<Long> getCount(@AuthenticationPrincipal User user) {
+        long count = mediaAssetService.countByOwner(user);
+        return ResponseEntity.ok(count);
+    }
+
     @PatchMapping("/media/{id}/thumbnail-ready")
     public ResponseEntity<?> markThumbnailReady(@PathVariable("id") UUID id) {
         mediaAssetService.markThumbnailReady(id);
@@ -168,5 +178,10 @@ public class MediaAssetController {
         Long size = mediaAssetService.getUserMediaAssetSize(user);
 
         return ResponseEntity.ok(size);
+    }
+
+
+    private enum OrderValues {
+        DESC, ASC
     }
 }

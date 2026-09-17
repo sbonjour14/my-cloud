@@ -9,6 +9,9 @@ import java.util.UUID;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -168,6 +171,18 @@ public class MediaAssetService {
         StoredFile sf = ma.getStoredFile();
         sf.setHasThumbnail(true);
         storedFileService.save(sf);
+    }
+
+
+    public List<MediaAsset> getPaginated(User user, int page, int size, boolean asc) {
+
+        Pageable pageable = PageRequest.of(page, size, asc ? Sort.by("createdAt").ascending() : Sort.by("createdAt").descending());
+
+        return mediaAssetRepository.findByOwner(user, pageable);
+    }
+
+    public long countByOwner(User user) {
+        return mediaAssetRepository.countByOwner(user);
     }
 
 }

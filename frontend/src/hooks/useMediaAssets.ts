@@ -1,14 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { deleteMediaAsset, getMediaAssets } from "@/lib/http-api/media"
+import { deleteMediaAsset, getCount, getMediaAssets } from "@/lib/http-api/media"
 
 export const mediaAssetsKeys = {
     all: ["uploads"] as const,
+    page: (page: number) => ["uploads", page] as const,
+    count: ["uploads", "count"] as const
 }
 
-export function useMediaAssets() {
+export function useMediaAssets(page: number = 0, size: number = 5, order: "ASC" | "DESC" = "DESC") {
     return useQuery({
-        queryFn: getMediaAssets,
-        queryKey: mediaAssetsKeys.all,
+        queryFn: () => getMediaAssets(page, size, order ),
+        queryKey: mediaAssetsKeys.page(page),
         refetchInterval: (query) => {
             const data = query.state.data;
             const hasPending = data?.some((asset) => !asset.hasThumbnail);
@@ -32,3 +34,13 @@ export function useDeleteMediaAsset() {
     }
 }
 
+
+export function useMediaAssetsCount() {
+    return useQuery({
+        queryKey: mediaAssetsKeys.count,
+        queryFn: async () => {
+            const count = await getCount();
+            return count 
+        }
+    })
+}
