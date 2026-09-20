@@ -11,6 +11,10 @@ export interface AvatarActionProps {
 }
 
 export default function AvatarAction({className, user} : AvatarActionProps) {
+    const handleLogout = () => {
+        logoutUser();
+        window.location.href = "/login";
+    }
 
     const avatar =  <Avatar className={"cursor-pointer "}>
                         <AvatarFallback className={"text-background bg-foreground"}>
@@ -31,7 +35,7 @@ export default function AvatarAction({className, user} : AvatarActionProps) {
                     Settings 
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onClick={() => logoutUser()}>
+                <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                     <LogOutIcon/>
                     Log Out
                 </DropdownMenuItem>

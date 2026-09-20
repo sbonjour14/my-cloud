@@ -46,11 +46,8 @@ export function UploadProvider({ children }: { children: ReactNode }) {
             end = notUploadedRanges[i].byteEnd;
 
             try {
-                console.log(`Uploading chunk ${i + 1}/${notUploadedRanges.length} for file ${file.name}: bytes ${start}-${end}`);
-
                 await uploadChunk(uploadId, file, start, end, signal);
 
-                console.log(`Chunk ${i + 1} uploaded successfully for file ${file.name}: bytes ${start}-${end}`);
                 const newSize: number = uploadedSizes.current.get(id)! + (end - start + 1);
                 uploadedSizes.current.set(id, newSize);
 

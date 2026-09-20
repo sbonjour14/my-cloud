@@ -46,7 +46,6 @@ export function TestPage() {
     };
 
     const handleFileChange2 = (event: React.ChangeEvent<HTMLInputElement>) => {
-        console.log("handleFileChange2");
         const fichier = event.target.files?.[0];
         if (!fichier) return;
         uploadFile(fichier);
@@ -55,7 +54,6 @@ export function TestPage() {
 
     function handleDeleteMediaAsset(id: string, filename: string) {
         try {
-            console.log("deleting: ",filename);
             const item = uploads.find(i => i.name === filename);
             if(item)cancel(item);
             deleteAsset(id);

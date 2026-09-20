@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export function NotFoundPage() {
@@ -6,6 +7,14 @@ export function NotFoundPage() {
 
     return (
         <div className="flex min-h-svh flex-col items-center justify-center gap-4 text-center px-4">
+            <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 left-4"
+                onClick={() => navigate(-1)}
+            >
+                <ArrowLeft />
+            </Button>
             <p className="text-sm font-medium text-muted-foreground">404</p>
             <h1 className="text-3xl font-heading font-medium">Page not found</h1>
             <p className="text-muted-foreground max-w-sm">
