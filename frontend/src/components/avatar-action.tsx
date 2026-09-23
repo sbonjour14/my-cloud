@@ -26,16 +26,16 @@ export default function AvatarAction({className, user} : AvatarActionProps) {
         <DropdownMenu>
             <DropdownMenuTrigger render={<button>{avatar}</button>}/>
             <DropdownMenuContent className={cn(className)}>
-                <DropdownMenuItem>
+                <DropdownMenuItem className={"cursor-pointer"}>
                     <UserIcon/>
                     Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem className={"cursor-pointer"}>
                     <SettingsIcon/>
                     Settings 
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                <DropdownMenuItem variant="destructive" onClick={handleLogout} className={"cursor-pointer"}>
                     <LogOutIcon/>
                     Log Out
                 </DropdownMenuItem>
