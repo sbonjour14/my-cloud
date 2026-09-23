@@ -1,3 +1,4 @@
+import UploadButton from "@/components/buttons/uploadButton";
 import Header from "@/components/header/header";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -21,6 +22,7 @@ export function HomePage() {
 			<Button variant={"default"} onClick={() => navigate("/test")}>
 				test
 			</Button>}
+			<UploadButton className="absolute right-15 bottom-20 translate-1/2 h-18 w-18 rounded-2xl"/>
 		</div>
 	)
 }
