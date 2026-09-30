@@ -41,7 +41,7 @@ public class UploadSessionController {
     private final UploadSessionService uploadSessionService;
     private final FileService fileService;
 
-    @PostMapping("/uploads/init")
+    @PostMapping("/upload-sessions/init")
     public ResponseEntity<InitUploadSessionResult> initUploadSession(
             @Valid @RequestBody InitUploadSessionRequest request, @AuthenticationPrincipal User user) {
         FileType fileType = fileService.getFileType(request.mediaType.toString());
@@ -52,13 +52,13 @@ public class UploadSessionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(InitUploadSessionResult.from(result));
     }
 
-    @GetMapping("/uploads/{id}")
+    @GetMapping("/upload-sessions/{id}")
     public ResponseEntity<UploadSessionResponse> getUploadSession(@PathVariable UUID id, @AuthenticationPrincipal User user) {
         UploadSession us = uploadSessionService.findById(id, user);
         return ResponseEntity.ok(UploadSessionResponse.from(us));
     }
 
-    @PostMapping("/uploads/{id}")
+    @PostMapping("/upload-sessions/{id}")
     public ResponseEntity<String> writeChunk(@PathVariable UUID id, @Valid @RequestBody MultipartFile chunk,
             @RequestHeader("Content-Range") String contentRange, @AuthenticationPrincipal User user) {
         Matcher matcher = Pattern.compile("bytes (\\d+)-(\\d+)/(\\d+)").matcher(contentRange);

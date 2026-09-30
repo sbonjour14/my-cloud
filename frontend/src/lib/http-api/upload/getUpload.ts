@@ -1,9 +1,8 @@
-
 import { api } from "@/lib/axios";
-import type { UploadSessionResponse} from "@/types";
+import { uploadsUrl } from ".";
 
-
-export async function getUpload(id: string) : Promise<UploadSessionResponse>{
-    const res = await api.get("/uploads/" + id);
+export type Upload = {id: string, filename: string, totalSize:number, createdAt: string}
+export async function getUploads() : Promise<Upload[]> {
+    const res = await api.get(uploadsUrl);
     return res.data;
 }

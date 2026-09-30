@@ -34,6 +34,7 @@ public class UploadSessionService {
     private final UploadSessionRepository repository;
     private final MediaAssetService mediaAssetService;
     private final StoredFileService storedFileService;
+    private final UploadService uploadService;
     private final FileService fileService;
 
     @Value("${upload.chunk-size.image:1048576}")
@@ -136,6 +137,7 @@ public class UploadSessionService {
         if(uploadSession.isComplete()) {
             uploadSession.setStatus(UploadSessionStatus.COMPLETE);
             repository.save(uploadSession);
+            uploadService.create(uploadSession);
             try {
 
                 String checksum = fileService.calculateChecksum(Path.of(uploadSession.getTempFilePath()));

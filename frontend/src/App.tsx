@@ -6,6 +6,7 @@ import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { TestPage } from "./pages/TestPage";
 import { UnauthorizedPage } from "./pages/401Page";
+import UploadsPage from "./pages/UploadsPage";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/test" element={<TestPage/>}/>
+        <Route path="/my-uploads" element={<UploadsPage/>}/>
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

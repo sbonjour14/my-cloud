@@ -1,5 +1,6 @@
 import { calculateChecksum } from "@/utils/upload";
 import { api } from "../../axios";
+import { uploadsessionsUrl } from ".";
 
 export type UploadInitRequest = {
     filename: string,
@@ -12,7 +13,7 @@ export type UploadInitResponse = {
     url: string
 }
 
-export async function uploadInit(file: File): Promise<UploadInitResponse> {
+export async function uploadSessionInit(file: File): Promise<UploadInitResponse> {
     const body: UploadInitRequest = {
         filename: file.name,
         mediaType: file.type,
@@ -21,7 +22,7 @@ export async function uploadInit(file: File): Promise<UploadInitResponse> {
     };
 
     const res = await api.post<UploadInitResponse>(
-        "/uploads/init",
+        uploadsessionsUrl + "/init",
         body
     );
 

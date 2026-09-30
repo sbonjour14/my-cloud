@@ -124,6 +124,6 @@ public class UploadSession {
     }
 
     public String getUrl() {
-        return "/uploads/" + id;
+        return "/upload-sessions/" + id;
     }
 }

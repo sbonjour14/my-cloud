@@ -22,7 +22,7 @@ export function HomePage() {
 			<Button variant={"default"} onClick={() => navigate("/test")}>
 				test
 			</Button>}
-			<UploadButton className="absolute right-15 bottom-20 translate-1/2 h-18 w-18 rounded-2xl"/>
+			<UploadButton className="absolute right-5 bottom-10 h-18 w-18 rounded-2xl"/>
 		</div>
 	)
 }

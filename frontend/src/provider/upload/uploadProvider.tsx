@@ -2,9 +2,9 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { getChunkSizeof, getNonUploadedRanges } from "@/utils/upload";
 import axios from "axios";
-import { uploadInit } from "@/lib/http-api/upload/uploadInit";
+import { uploadSessionInit } from "@/lib/http-api/upload/uploadSessionInit";
 import type { ByteRange, UploadSessionResponse } from "@/types";
-import { getUpload } from "@/lib/http-api/upload/getUpload";
+import { getUploadSession } from "@/lib/http-api/upload/getUploadSession";
 import { uploadChunk } from "@/lib/http-api/upload/uploadChunks";
 import { UploadContext, type UploadSession } from "@/provider/upload";
 
@@ -87,7 +87,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         uploadedSizes.current.set(newItem.id, 0);
         setUploads(prev => [...prev, newItem]);
         try {
-            const data = await uploadInit(file);
+            const data = await uploadSessionInit(file);
 
             console.log("file already exists: ", data.fileAlreadyExists, " url: ", data.url);
 
@@ -98,7 +98,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
             // save file before starting upload of chunks
             files.current.set(newItem.id, file);
 
-            const uploadSession: UploadSessionResponse = await getUpload(uploadId);
+            const uploadSession: UploadSessionResponse = await getUploadSession(uploadId);
 
             setUploads(prev => prev.map(item => {
                 if (item.id === newItem.id)
@@ -143,10 +143,10 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                 return i;
             }));
             try {
-                return await uploadChunks(item.id, item.uploadId!, file, ac.signal, (await getUpload(item.uploadId!)).uploadedRanges);
+                return await uploadChunks(item.id, item.uploadId!, file, ac.signal, (await getUploadSession(item.uploadId!)).uploadedRanges);
             } catch (error) {
                 if (axios.isAxiosError(error) && error.response?.status === 404) {
-                    const res = await uploadInit(file);
+                    const res = await uploadSessionInit(file);
                     if(res.fileAlreadyExists) {
                         uploadedSizes.current.set(item.id, item.totalSize)
                         setUploads(prev => prev.map(i => i.id === item.id ? ({...i, status: "COMPLETE", uploadedSize: item.totalSize}) : i))
