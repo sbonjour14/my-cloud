@@ -44,5 +44,5 @@ logging:
 
 upload:
   chunk-size:
-    image: 2097152
+    image:  5242880
     video: 20971520

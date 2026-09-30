@@ -1,7 +1,7 @@
 import type { ByteRange } from "@/types";
 import { createSHA256 } from "hash-wasm";
 
-export const CHUNK_SIZE_IMAGE = 1024 * 1024 * 2;
+export const CHUNK_SIZE_IMAGE = 1024 * 1024 * 5;
 export const CHUNK_SIZE_VIDEO = 1024 * 1024 * 20;
 
 
