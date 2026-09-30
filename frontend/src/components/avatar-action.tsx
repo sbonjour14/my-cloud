@@ -2,8 +2,9 @@ import type { UserResponse } from "@/types"
 import { logoutUser } from "@/lib/http-api/auth"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "./ui/avatar"
-import { LogOutIcon, SettingsIcon, UserIcon } from "lucide-react"
+import { Bug, LogOutIcon, SettingsIcon, UserIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useNavigate } from "react-router-dom"
 
 export interface AvatarActionProps {
     className?: string,
@@ -11,6 +12,7 @@ export interface AvatarActionProps {
 }
 
 export default function AvatarAction({className, user} : AvatarActionProps) {
+    const navigate = useNavigate();
     const handleLogout = () => {
         logoutUser();
         window.location.href = "/login";
@@ -39,6 +41,15 @@ export default function AvatarAction({className, user} : AvatarActionProps) {
                     <LogOutIcon/>
                     Log Out
                 </DropdownMenuItem>
+                {user.role === "ADMIN" &&
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="default" onClick={() => navigate("/test")} className={"cursor-pointer"}>
+                            <Bug />
+                            Test
+                        </DropdownMenuItem>
+                    </>
+                }
             </DropdownMenuContent>
         </DropdownMenu>
     )

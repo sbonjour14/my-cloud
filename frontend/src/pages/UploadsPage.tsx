@@ -4,7 +4,7 @@ import { HomeIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-
+import { renderStorageUsed } from "@/utils/formatBytes";
 export default function UploadsPage() {
     const [uploads, setUploads] = useState<Upload[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -46,7 +46,7 @@ export default function UploadsPage() {
                                     {upload.filename}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    {upload.totalSize} bytes
+                                    {renderStorageUsed(upload.totalSize)}
                                 </p>
                             </div>
 
