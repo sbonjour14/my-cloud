@@ -92,6 +92,7 @@ export function LoginForm({
                                                 onChange: () => clearErrors("email"),
                                             })}
                                             aria-invalid={!!errors.email}
+                                            className="text-sm"
                                         />
                                     </InputGroup>
                                     {!!errors.email && <FieldError>{errors.email?.message as string}</FieldError>}
