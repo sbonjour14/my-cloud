@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    allowedHosts: ["cloud.sbonjour.com"],
+    allowedHosts: ["cloud.sbonjour.com", "rudderless-chameleonic-maude.ngrok-free.dev"],
     strictPort: true,
     proxy: {
       '/api': {
