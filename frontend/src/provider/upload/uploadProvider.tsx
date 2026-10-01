@@ -18,7 +18,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         const intervalId = setInterval(() => {
             setUploads(prev => prev.map(item => {
                 const current = uploadedSizes.current.get(item.id);
-                if (current !== undefined && current !== item.uploadedSize) {
+                if (current !== undefined && current !== item.uploadedSize && item.status !== "COMPLETE") {
                     return { ...item, uploadedSize: current };
                 }
                 return item;
@@ -50,13 +50,18 @@ export function UploadProvider({ children }: { children: ReactNode }) {
 
                 const newSize: number = uploadedSizes.current.get(id)! + (end - start + 1);
                 uploadedSizes.current.set(id, newSize);
-
                 i++;
 
             } catch (error) {
                 console.error(`Error uploading chunk ${i + 1} for file ${file.name}: bytes ${start}-${end}`, error);
                 if (axios.isAxiosError(error) && !signal.aborted) {
-                    alert("upload failed, please retry: " + error.message);
+                    
+                    setUploads(prev => prev.map(item => {
+                        if (item.id === id)
+                            return {...item, status: "PAUSED"}
+                        return item
+                    }));
+                    
                     return;
                 }
             }
@@ -92,6 +97,14 @@ export function UploadProvider({ children }: { children: ReactNode }) {
             console.log("file already exists: ", data.fileAlreadyExists, " url: ", data.url);
 
             if (data.fileAlreadyExists) {
+                setUploads(prev => prev.map(item => {
+                    if (item.id === newItem.id) {
+                        let itemm: UploadSession = {...newItem, status: "COMPLETE", uploadedSize: file.size};
+                        console.log(itemm);
+                        return itemm;
+                    }
+                    return item
+                }));
                 return;
             }
             const uploadId = data.url.split("/").pop()!;
