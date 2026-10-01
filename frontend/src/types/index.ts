@@ -34,6 +34,7 @@ export type MediaAssetResponse = {
   thumbnailUrl: string,
   createdAt: string,
   hasThumbnail: boolean,
+  type: "VIDEO" | "IMAGE"
 }
 
 export type ByteRange = {
