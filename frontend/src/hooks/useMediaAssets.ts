@@ -30,7 +30,8 @@ export function useDeleteMediaAsset() {
     });
 
     return {
-        deleteAsset: mutation.mutate
+        deleteAsset: mutation.mutate,
+        isPending: mutation.isPending,
     }
 }
 
