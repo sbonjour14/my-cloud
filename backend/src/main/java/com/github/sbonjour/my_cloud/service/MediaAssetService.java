@@ -174,10 +174,12 @@ public class MediaAssetService {
     }
 
 
-    public List<MediaAsset> getPaginated(User user, int page, int size, boolean asc) {
+    public List<MediaAsset> getPaginated(User user, int page, int size, boolean asc, StoredFile.FileType type) {
 
         Pageable pageable = PageRequest.of(page, size, asc ? Sort.by("createdAt").ascending() : Sort.by("createdAt").descending());
 
+        if(type != null)
+            return mediaAssetRepository.findByOwnerAndStoredFile_FileType(user, type, pageable);
         return mediaAssetRepository.findByOwner(user, pageable);
     }
 
