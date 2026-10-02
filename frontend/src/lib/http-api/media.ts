@@ -20,12 +20,13 @@ export async function uploadFile(file: File): Promise<MediaAssetResponse> {
 }
 
 
-export async function getMediaAssets(page: number, size: number, order: "ASC" | "DESC") : Promise<MediaAssetResponse[]> {
+export async function getMediaAssets(page: number, size: number, order: "ASC" | "DESC", type?:"IMAGE"|"VIDEO") : Promise<MediaAssetResponse[]> {
 	const {data: response } = await api.get("/mediaAssets", {
 		params: {
 			page,
 			size,
-			order
+			order,
+			type
 		}
 	});
 	return response as MediaAssetResponse[];

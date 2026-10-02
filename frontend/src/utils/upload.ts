@@ -4,6 +4,9 @@ import { createSHA256 } from "hash-wasm";
 export const CHUNK_SIZE_IMAGE = 1024 * 1024 * 5;
 export const CHUNK_SIZE_VIDEO = 1024 * 1024 * 20;
 
+export function getFileType(file: File) : "IMAGE" | "VIDEO" {
+    return getChunkSizeof(file) === CHUNK_SIZE_IMAGE ? "IMAGE" : "VIDEO";
+}
 
 export function getChunkSizeof(file: File) {
     return file.type.startsWith("video") ? CHUNK_SIZE_VIDEO : CHUNK_SIZE_IMAGE;

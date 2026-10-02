@@ -1,6 +1,6 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { getChunkSizeof, getNonUploadedRanges } from "@/utils/upload";
+import { getChunkSizeof, getFileType, getNonUploadedRanges } from "@/utils/upload";
 import axios from "axios";
 import { uploadSessionInit } from "@/lib/http-api/upload/uploadSessionInit";
 import type { ByteRange, UploadSessionResponse } from "@/types";
@@ -13,8 +13,11 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     const [uploads, setUploads] = useState<UploadSession[]>([]);
     const uploadedSizes = useRef<Map<string, number>>(new Map());
     const files = useRef<Map<string, File>>(new Map());
+    const hasActiveUpload = uploads.some(item => item.status === "UPLOADING");
 
     useEffect(() => {
+        if (!hasActiveUpload) return;
+
         const intervalId = setInterval(() => {
             setUploads(prev => prev.map(item => {
                 const current = uploadedSizes.current.get(item.id);
@@ -26,8 +29,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         }, 1000);
 
         return () => clearInterval(intervalId);
-    }, []);
-
+    }, [hasActiveUpload]);
 
     async function uploadChunks(id: string, uploadId: string, file: File, signal: AbortSignal, ranges: ByteRange[]) {
         const size = file.size;
@@ -54,7 +56,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
 
             } catch (error) {
                 console.error(`Error uploading chunk ${i + 1} for file ${file.name}: bytes ${start}-${end}`, error);
-                if (axios.isAxiosError(error) && !signal.aborted) {
+                if (!signal.aborted) {
                     
                     setUploads(prev => prev.map(item => {
                         if (item.id === id)
@@ -87,6 +89,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
             totalSize: file.size,
             uploadedSize: 0,
             abortController: abortController,
+            type: getFileType(file)
         };
         // add new upload item to list for ui
         uploadedSizes.current.set(newItem.id, 0);
@@ -117,7 +120,8 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                 if (item.id === newItem.id)
                     return { ...item, uploadId: uploadId, status: "UPLOADING", uploadedSize: uploadSession.uploadedSize };
                 return item;
-            }))
+            }));
+            uploadedSizes.current.set(newItem.id, uploadSession.uploadedSize);
 
             if (uploadSession.status === "UPLOADING") {
                 await uploadChunks(newItem.id, uploadId, file, abortController.signal, uploadSession.uploadedRanges)
@@ -136,7 +140,9 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         mutationFn: (file: File) => {
             return init(file, new AbortController());
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["uploads"] }),
+        onSuccess: (_, file) => {
+            queryClient.invalidateQueries({ queryKey: ["uploads", getFileType(file)]});
+        },
     });
 
     const mutationResume = useMutation({
@@ -156,7 +162,10 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                 return i;
             }));
             try {
-                return await uploadChunks(item.id, item.uploadId!, file, ac.signal, (await getUploadSession(item.uploadId!)).uploadedRanges);
+                const uploadSession = await getUploadSession(item.uploadId!);
+                uploadedSizes.current.set(item.id, uploadSession.uploadedSize);
+
+                return await uploadChunks(item.id, item.uploadId!, file, ac.signal, uploadSession.uploadedRanges);
             } catch (error) {
                 if (axios.isAxiosError(error) && error.response?.status === 404) {
                     const res = await uploadSessionInit(file);
@@ -167,7 +176,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                 }
             }
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["uploads"] })
+        onSuccess: (_, item) => queryClient.invalidateQueries({ queryKey: ["uploads", item.type] })
 
     })
 

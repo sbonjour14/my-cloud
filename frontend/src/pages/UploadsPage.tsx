@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getUploads, type Upload } from "@/lib/http-api/upload/getUpload";
-import { HomeIcon } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -23,8 +23,8 @@ export default function UploadsPage() {
 
     return (
         <div className="p-6">
-            <Button variant={"ghost"} className={"absolute top-5 left-5"} onClick={() => navigate("/")}>
-                <HomeIcon></HomeIcon>
+            <Button variant={"ghost"} className={"absolute top-5 left-5"} onClick={() => navigate(-1)}>
+                <ArrowLeft/>
             </Button>
             <h1 className="text-2xl font-bold mb-6">My uploads</h1>
 

@@ -9,6 +9,7 @@ export type UploadSession = {
     uploadedSize: number;
     totalSize: number;
     abortController: AbortController;
+    type: "IMAGE" | "VIDEO"
 }
 export const UploadContext = createContext<{
     upload: (file: File) => void;
