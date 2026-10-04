@@ -11,6 +11,8 @@ import lombok.Setter;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.github.sbonjour.my_cloud.service.FileType;
+
 /**
  * Represents a media asset (photo or video) uploaded by a user.
  *
@@ -23,6 +25,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "media_assets", uniqueConstraints = {
         @UniqueConstraint(columnNames = { "owner_id", "filename" })
+}, indexes = {
+        @Index(name = "idx_media_assets_owner_taken_at", columnList = "owner_id, taken_at DESC, id DESC"),
+        @Index(name = "idx_media_assets_owner_type_taken_at", columnList = "owner_id, file_type, taken_at DESC, id DESC")
 })
 @Getter
 @Setter
@@ -50,6 +55,18 @@ public class MediaAsset {
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();
+    
+    @Column(nullable = false, updatable = false)
+    @Builder.Default
+    private Instant takenAt = Instant.now();
+
+    @Column(nullable = false, updatable = false)
+    @Builder.Default
+    private Boolean takenAtKnown = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FileType fileType;
 
     public String getUrl() {
         return "/mediaAssets/" + id;

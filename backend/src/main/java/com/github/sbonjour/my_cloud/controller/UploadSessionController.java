@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
+import com.github.sbonjour.my_cloud.service.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession.BytesRange;
 import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
 import com.github.sbonjour.my_cloud.exception.InvalidInputException;

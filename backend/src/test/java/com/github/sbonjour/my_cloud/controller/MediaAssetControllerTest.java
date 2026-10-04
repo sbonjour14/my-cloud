@@ -26,6 +26,7 @@ import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
+import com.github.sbonjour.my_cloud.service.FileType;
 import com.github.sbonjour.my_cloud.service.MediaAssetService;
 
 @WebMvcTest(MediaAssetController.class)
@@ -59,7 +60,7 @@ public class MediaAssetControllerTest extends AbstractControllerTest {
                     .checksum("checksum")
                     .storagePath("/uploads/checksum")
                     .hasThumbnail(false)
-                    .fileType(StoredFile.FileType.IMAGE)
+                    .fileType(FileType.IMAGE)
                     .mediaType("image/jpeg")
                     .sizeBytes(50)
                     .build();

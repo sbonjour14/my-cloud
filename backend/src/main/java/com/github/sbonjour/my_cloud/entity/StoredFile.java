@@ -3,6 +3,8 @@ package com.github.sbonjour.my_cloud.entity;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.github.sbonjour.my_cloud.service.FileType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -63,9 +65,6 @@ public class StoredFile {
     @Builder.Default
     private Instant createdAt = Instant.now();
 
-    public enum FileType {
-        IMAGE, VIDEO
-    }
 
     public String getThumbnailPath() {
         int lastSlash = storagePath.lastIndexOf('/');

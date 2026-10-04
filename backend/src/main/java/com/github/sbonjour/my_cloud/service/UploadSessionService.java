@@ -2,6 +2,7 @@ package com.github.sbonjour.my_cloud.service;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.UUID;
 
@@ -15,7 +16,7 @@ import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.UploadSession;
 import com.github.sbonjour.my_cloud.entity.User;
-import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
+import com.github.sbonjour.my_cloud.service.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession.BytesRange;
 import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
 import com.github.sbonjour.my_cloud.exception.ConflictException;
@@ -35,6 +36,7 @@ public class UploadSessionService {
     private final MediaAssetService mediaAssetService;
     private final StoredFileService storedFileService;
     private final FileService fileService;
+    private final MetadataService metadataService;
 
     @Value("${upload.chunk-size.image:1048576}")
     private long imageChunkSize;
@@ -154,7 +156,10 @@ public class UploadSessionService {
                         .sizeBytes(uploadSession.getTotalSize())
                         .build());
 
-                MediaAsset mediaAsset = mediaAssetService.createMediaAsset(user, uploadSession.getFilename(), sf);
+
+                Instant taken_at = metadataService.extractTakenAt(Path.of(storagePath), uploadSession.getMediaType(), uploadSession.getFilename());
+
+                MediaAsset mediaAsset = mediaAssetService.createMediaAsset(user, uploadSession.getFilename(), sf, taken_at);
 
                 repository.deleteById(id);
                 return WriteChunkResult.from(mediaAsset);

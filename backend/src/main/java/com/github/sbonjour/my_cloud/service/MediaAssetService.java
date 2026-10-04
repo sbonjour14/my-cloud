@@ -3,6 +3,7 @@ package com.github.sbonjour.my_cloud.service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -75,12 +76,30 @@ public class MediaAssetService {
         return mediaAsset;
     }
 
-
     public MediaAsset createMediaAsset(User owner, String filename, StoredFile sf) {
         MediaAsset ma = mediaAssetRepository.save(MediaAsset.builder()
             .owner(owner)
             .filename(filename)
             .storedFile(sf)
+            .fileType(sf.getFileType())
+            .build()
+        );
+        if(!sf.isHasThumbnail())
+            publishThumbnailGenerationMessage(ma);
+        return ma;
+    }
+
+    public MediaAsset createMediaAsset(User owner, String filename, StoredFile sf, Instant taken_at) {
+        if(taken_at == null)
+            return createMediaAsset(owner, filename, sf);
+
+        MediaAsset ma = mediaAssetRepository.save(MediaAsset.builder()
+            .owner(owner)
+            .filename(filename)
+            .storedFile(sf)
+            .takenAt(taken_at)
+            .takenAtKnown(true)
+            .fileType(sf.getFileType())
             .build()
         );
         if(!sf.isHasThumbnail())
@@ -174,12 +193,12 @@ public class MediaAssetService {
     }
 
 
-    public List<MediaAsset> getPaginated(User user, int page, int size, boolean asc, StoredFile.FileType type) {
+    public List<MediaAsset> getPaginated(User user, int page, int size, boolean asc, FileType type) {
 
-        Pageable pageable = PageRequest.of(page, size, asc ? Sort.by("createdAt").ascending() : Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, size, asc ? Sort.by("createdAt").ascending() : Sort.by("takenAt", "id").descending());
 
         if(type != null)
-            return mediaAssetRepository.findByOwnerAndStoredFile_FileType(user, type, pageable);
+            return mediaAssetRepository.findByOwnerAndFileType(user, type, pageable);
         return mediaAssetRepository.findByOwner(user, pageable);
     }
 

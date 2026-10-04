@@ -15,7 +15,7 @@ import org.springframework.http.MediaType;
 
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
-import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
+import com.github.sbonjour.my_cloud.service.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession;
 import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
 import com.github.sbonjour.my_cloud.entity.User;

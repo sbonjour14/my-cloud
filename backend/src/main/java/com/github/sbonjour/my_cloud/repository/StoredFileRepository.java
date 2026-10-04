@@ -1,6 +1,8 @@
 package com.github.sbonjour.my_cloud.repository;
 
 import com.github.sbonjour.my_cloud.entity.StoredFile;
+import com.github.sbonjour.my_cloud.service.FileType;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -14,7 +16,7 @@ public interface StoredFileRepository extends JpaRepository<StoredFile, UUID> {
 
     boolean existsByChecksum(String checksum);
 
-    List<StoredFile> findByFileType(StoredFile.FileType mediaType);
+    List<StoredFile> findByFileType(FileType mediaType);
 
     @Query("SELECT COALESCE(SUM(s.sizeBytes), 0) FROM StoredFile s")
     Long getTotalStorageUsed();

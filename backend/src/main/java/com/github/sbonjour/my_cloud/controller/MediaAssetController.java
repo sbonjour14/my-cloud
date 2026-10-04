@@ -20,8 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.github.sbonjour.my_cloud.dto.MediaAssetResponse;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
-import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
+import com.github.sbonjour.my_cloud.service.FileType;
 import com.github.sbonjour.my_cloud.service.MediaAssetService;
 
 import lombok.RequiredArgsConstructor;
@@ -62,7 +62,7 @@ public class MediaAssetController {
     @GetMapping("/mediaAssets")
     public ResponseEntity<List<MediaAssetResponse>> getMediaAssets(@AuthenticationPrincipal User user,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "DESC") OrderValues order, @RequestParam (required = false) StoredFile.FileType type) {
+            @RequestParam(defaultValue = "DESC") OrderValues order, @RequestParam (required = false) FileType type) {
         
         List<MediaAsset> mediaAssets = mediaAssetService.getPaginated(user, page, size, order.equals(OrderValues.ASC), type);
 

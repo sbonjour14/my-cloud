@@ -3,7 +3,7 @@ package com.github.sbonjour.my_cloud.dto;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
+import com.github.sbonjour.my_cloud.service.FileType;
 
 public record MediaAssetResponse(
         UUID id,
@@ -11,6 +11,7 @@ public record MediaAssetResponse(
         String url,
         String thumbnailUrl,
         Instant createdAt,
+        Instant takenAt,
         boolean hasThumbnail,
         FileType type) {
     public static MediaAssetResponse fromEntity(com.github.sbonjour.my_cloud.entity.MediaAsset mediaAsset) {
@@ -20,8 +21,9 @@ public record MediaAssetResponse(
                 "/media/" + mediaAsset.getId(),
                 "/media/" + mediaAsset.getId() + "/thumbnail",
                 mediaAsset.getCreatedAt(),
+                mediaAsset.getTakenAt(),
                 mediaAsset.getStoredFile().isHasThumbnail(),
-            mediaAsset.getStoredFile().getFileType()
+                mediaAsset.getStoredFile().getFileType()
             );
     }
 

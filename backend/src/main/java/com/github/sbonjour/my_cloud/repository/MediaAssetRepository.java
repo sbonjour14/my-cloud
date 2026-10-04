@@ -12,12 +12,13 @@ import org.springframework.data.repository.query.Param;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
+import com.github.sbonjour.my_cloud.service.FileType;
 
 public interface MediaAssetRepository extends JpaRepository<MediaAsset, UUID> {
     List<MediaAsset> findByOwner(User owner);
     List<MediaAsset> findByOwner(User owner, Pageable pageable);
     
-    List<MediaAsset> findByOwnerAndStoredFile_FileType(User owner, StoredFile.FileType type, Pageable pageable);
+    List<MediaAsset> findByOwnerAndFileType(User owner, FileType type, Pageable pageable);
 
     Optional<MediaAsset> findByOwnerAndFilenameIgnoringCase(User owner, String fileName);
 

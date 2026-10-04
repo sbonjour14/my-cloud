@@ -14,7 +14,7 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 
 import com.github.sbonjour.my_cloud.TestDataFactory;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
-import com.github.sbonjour.my_cloud.entity.StoredFile.FileType;
+import com.github.sbonjour.my_cloud.service.FileType;
 import com.github.sbonjour.my_cloud.entity.User;
 
 @DataJpaTest
