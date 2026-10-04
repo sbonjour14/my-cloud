@@ -1,4 +1,4 @@
-import { CloudIcon, ImageIcon, Menu, UploadIcon, VideoIcon } from "lucide-react"
+import { CloudIcon, HomeIcon, ImageIcon, Menu, VideoIcon } from "lucide-react"
 import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTrigger } from "../ui/drawer"
 import { Button } from "../ui/button"
 import { cn } from "@/lib/utils"
@@ -26,10 +26,10 @@ export type NavDrawerContentItem = {
 
 const content: NavDrawerContentItem[] = [
     {
-        id: 1,
-        icon: <UploadIcon size={16} />,
-        label: "Uploads",
-        goTo: "my-uploads"
+        id: 0,
+        icon: <HomeIcon size={16} />,
+        label: "Home",
+        goTo: "/"
     },
     {
         id: 2,

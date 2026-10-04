@@ -13,7 +13,6 @@ import { Eye, EyeOff, Mail } from "lucide-react";
 import { useState } from "react";
 import type { LoginFormBody } from "@/types";
 import { Button } from "../ui/button";
-import { toast } from "../ui/toast";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "@/lib/http-api/auth";
 import axios from "axios";
@@ -44,10 +43,6 @@ export function LoginForm({
     const onSubmit = async (data: LoginFormBody) => {
         try {
             await loginUser(data);
-            toast.add({
-                type: "success",
-                description: "You have been logged in successfully.",
-            });
             navigate("/");
         } catch (error) {
             if (axios.isAxiosError(error)) {

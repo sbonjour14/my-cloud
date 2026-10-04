@@ -10,7 +10,7 @@ import { ArrowLeftIcon, CloudIcon, Home } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { useStorageUsage } from "@/hooks/useStorageUsage";
 import { useUpload, type UploadSession } from "@/provider/upload";
-import { UploadItem } from "@/components/upload/uploadItem";
+import { UploadSessionItem } from "@/components/upload/uploadISessiontem";
 import MediaAssetCard from "@/components/media-asset/media-asset-card";
 
 export function TestPage() {
@@ -83,7 +83,7 @@ export function TestPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 {uploads.map((uploadItem: UploadSession) => (
-                    <UploadItem
+                    <UploadSessionItem
                         key={uploadItem.id}
                         item={uploadItem}
                         onCancel={onCancel}

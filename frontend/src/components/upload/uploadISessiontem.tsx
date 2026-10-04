@@ -7,7 +7,7 @@ import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
 
 
-export interface UploadItemProps {
+export interface UploadSessionItemProps {
 	item: UploadSession,
 	className?: string,
 	onPause: (item: UploadSession) => void,
@@ -15,7 +15,7 @@ export interface UploadItemProps {
 	onCancel: (item: UploadSession) => void,
 }
 
-export const UploadItem = memo(({ item, className, onPause, onResume, onCancel }: UploadItemProps) => {
+export const UploadSessionItem = memo(({ item, className, onPause, onResume, onCancel }: UploadSessionItemProps) => {
 	return (
 		<>
 			<Item className={cn(className, " w-60 flex flex-row items-center gap-2")} variant={"outline"}>

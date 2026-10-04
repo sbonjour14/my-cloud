@@ -7,6 +7,7 @@ import type { ByteRange, UploadSessionResponse } from "@/types";
 import { getUploadSession } from "@/lib/http-api/upload/getUploadSession";
 import { uploadChunk } from "@/lib/http-api/upload/uploadChunks";
 import { UploadContext, type UploadSession } from "@/provider/upload";
+import { mediaAssetsKeys } from "@/hooks/mediaAsset";
 
 export function UploadProvider({ children }: { children: ReactNode }) {
     const queryClient = useQueryClient();
@@ -55,7 +56,6 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                 i++;
 
             } catch (error) {
-                console.error(`Error uploading chunk ${i + 1} for file ${file.name}: bytes ${start}-${end}`, error);
                 if (!signal.aborted) {
                     
                     setUploads(prev => prev.map(item => {
@@ -78,7 +78,6 @@ export function UploadProvider({ children }: { children: ReactNode }) {
             return item;
         }))
         uploadedSizes.current.set(id, size);
-        console.log("done!");
     }
 
     async function init(file: File, abortController: AbortController) {
@@ -97,13 +96,10 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         try {
             const data = await uploadSessionInit(file);
 
-            console.log("file already exists: ", data.fileAlreadyExists, " url: ", data.url);
-
             if (data.fileAlreadyExists) {
                 setUploads(prev => prev.map(item => {
                     if (item.id === newItem.id) {
-                        let itemm: UploadSession = {...newItem, status: "COMPLETE", uploadedSize: file.size};
-                        console.log(itemm);
+                        const itemm: UploadSession = {...newItem, status: "COMPLETE", uploadedSize: file.size};
                         return itemm;
                     }
                     return item
@@ -141,7 +137,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
             return init(file, new AbortController());
         },
         onSuccess: (_, file) => {
-            queryClient.invalidateQueries({ queryKey: ["uploads", getFileType(file)]});
+            queryClient.invalidateQueries({ queryKey: getFileType(file) === "IMAGE" ? mediaAssetsKeys.images : mediaAssetsKeys.videos});
         },
     });
 
@@ -176,9 +172,11 @@ export function UploadProvider({ children }: { children: ReactNode }) {
                 }
             }
         },
-        onSuccess: (_, item) => queryClient.invalidateQueries({ queryKey: ["uploads", item.type] })
-
-    })
+        onSuccess: (_, item) => {
+            queryClient.invalidateQueries({ queryKey: item.type === "IMAGE" ? mediaAssetsKeys.images :  mediaAssetsKeys.videos});
+            queryClient.invalidateQueries({ queryKey: mediaAssetsKeys.all});
+        }
+    });
 
 
     return (

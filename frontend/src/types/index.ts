@@ -9,6 +9,8 @@ export type LoginFormBody = {
   password : string
 }
 
+export type FileType = "IMAGE" | "VIDEO"
+
 export type Role = "USER" | "ADMIN";
 
 export type RegisterResponse = {
@@ -34,7 +36,7 @@ export type MediaAssetResponse = {
   thumbnailUrl: string,
   createdAt: string,
   hasThumbnail: boolean,
-  type: "VIDEO" | "IMAGE"
+  type: FileType
 }
 
 export type ByteRange = {

@@ -12,8 +12,7 @@ import { Eye, EyeOff, Mail, UserIcon } from "lucide-react";
 import { useState } from "react";
 import type { RegisterFormBody } from "@/types";
 import { Button } from "../ui/button";
-import { toast } from "../ui/toast";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { registerUser } from "@/lib/http-api/auth";
 import axios from "axios";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
@@ -42,8 +41,6 @@ export function RegisterForm({
         reValidateMode: "onSubmit",
     });
 
-    const navigate = useNavigate();
-
     const [isPasswordShown, setIsPasswordShown] = useState<boolean>(false);
     const [isConfirmPasswordShown, setIsConfirmPasswordShown] = useState<boolean>(false);
 
@@ -59,17 +56,6 @@ export function RegisterForm({
         const { confirmPassword, ...payload } = data;
         try {
             await registerUser(payload);
-            const id = toast.add({
-                type: "success",
-                description: "Account created with success",
-                actionProps: {
-                    children: "go to login",
-                    onClick() {
-                        navigate("/login");
-                        toast.close(id);
-                    },
-                },
-            });
             reset();
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
