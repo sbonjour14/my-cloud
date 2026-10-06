@@ -1,22 +1,31 @@
 package com.github.sbonjour.my_cloud.service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.KeysetScrollPosition;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Window;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.github.sbonjour.my_cloud.FileType;
+import com.github.sbonjour.my_cloud.MediaAssetWindow;
 import com.github.sbonjour.my_cloud.config.RabbitMQConfig;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
@@ -204,6 +213,49 @@ public class MediaAssetService {
 
     public long countByOwner(User user) {
         return mediaAssetRepository.countByOwner(user);
+    }
+
+    private ScrollPosition decodeCursor(String cursor) {
+        if (cursor == null || cursor.isBlank())
+            return ScrollPosition.keyset();
+        try {
+            String raw = new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8);
+            String[] parts = raw.split("\\|");
+            Map<String, Object> keys = new LinkedHashMap<>();
+            keys.put("takenAt", Instant.parse(parts[0]));
+            keys.put("id", UUID.fromString(parts[1]));
+            return ScrollPosition.forward(keys);
+        } catch (RuntimeException e) {
+            throw new IllegalArgumentException("Curseur invalide");
+        }
+    }
+
+    private String encodeCursor(KeysetScrollPosition pos) {
+        Map<String, Object> keys = pos.getKeys();
+        String raw = keys.get("takenAt") + "|" + keys.get("id");
+        return Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
+    }
+
+
+    public MediaAssetWindow getScroll(User user, String cursor, int size, boolean asc, FileType fileType) {
+        Sort sort = asc
+                ? Sort.by("takenAt", "id").ascending()
+                : Sort.by("takenAt", "id").descending();
+
+        ScrollPosition position = decodeCursor(cursor);
+        Limit limit = Limit.of(Math.min(size, 100));
+        
+        Window<MediaAsset> window = (fileType == null) 
+            ? mediaAssetRepository.findByOwner(user, position, limit, sort)
+            : mediaAssetRepository.findByOwnerAndFileType(user, fileType, position, limit, sort);
+
+        String next = (window.hasNext() && !window.isEmpty()) 
+            ? encodeCursor( (KeysetScrollPosition) window.positionAt(window.size() - 1))
+            : null ;
+
+        
+        return new MediaAssetWindow(window.getContent(), next);
     }
 
 }

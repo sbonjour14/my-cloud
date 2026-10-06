@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Window;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +19,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.github.sbonjour.my_cloud.FileType;
+import com.github.sbonjour.my_cloud.MediaAssetWindow;
 import com.github.sbonjour.my_cloud.dto.MediaAssetResponse;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.User;
-import com.github.sbonjour.my_cloud.service.FileType;
 import com.github.sbonjour.my_cloud.service.MediaAssetService;
 
 import lombok.RequiredArgsConstructor;
@@ -181,6 +183,24 @@ public class MediaAssetController {
         return ResponseEntity.ok(size);
     }
 
+    @GetMapping("/mediaAssetsList")
+    public ResponseEntity<List<MediaAssetResponse>> getMediaAssetsList(@AuthenticationPrincipal User user,
+            @RequestParam String cursor, @RequestParam(defaultValue = "100") int size,
+            @RequestParam(defaultValue = "DESC") OrderValues order, @RequestParam (required = false) FileType type) {
+        
+        MediaAssetWindow mediaAssets = mediaAssetService.getScroll(user, cursor, size, order.equals("ASC"), type);
+
+        List<MediaAssetResponse> response = mediaAssets.items().stream()
+                .map(MediaAssetResponse::fromEntity)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    private record MediaAssetWindowResponse(List<MediaAssetResponse> items, String nextCursor) {
+        MediaAssetWindowResponse from(MediaAssetWindow window) {
+            return new MediaAssetWindowResponse(window.items().stream().map(MediaAssetResponse::fromEntity).toList(), window.nextCursor());
+        }
+    }
 
     private enum OrderValues {
         DESC, ASC
