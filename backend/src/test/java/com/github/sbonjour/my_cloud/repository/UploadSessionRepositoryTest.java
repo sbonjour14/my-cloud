@@ -12,10 +12,10 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.http.MediaType;
 
+import com.github.sbonjour.my_cloud.FileType;
 import com.github.sbonjour.my_cloud.TestDataFactory;
 import com.github.sbonjour.my_cloud.entity.UploadSession;
 import com.github.sbonjour.my_cloud.entity.User;
-import com.github.sbonjour.my_cloud.service.FileType;
 
 @DataJpaTest
 public class UploadSessionRepositoryTest extends AbstractPostgresContainerTest {

@@ -3,7 +3,7 @@ package com.github.sbonjour.my_cloud.dto;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.github.sbonjour.my_cloud.service.FileType;
+import com.github.sbonjour.my_cloud.FileType;
 
 public record MediaAssetResponse(
         UUID id,

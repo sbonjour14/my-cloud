@@ -12,11 +12,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.github.sbonjour.my_cloud.FileType;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.UploadSession;
 import com.github.sbonjour.my_cloud.entity.User;
-import com.github.sbonjour.my_cloud.service.FileType;
 import com.github.sbonjour.my_cloud.entity.UploadSession.BytesRange;
 import com.github.sbonjour.my_cloud.entity.UploadSession.UploadSessionStatus;
 import com.github.sbonjour.my_cloud.exception.ConflictException;

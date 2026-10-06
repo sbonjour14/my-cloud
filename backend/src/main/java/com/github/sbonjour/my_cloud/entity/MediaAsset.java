@@ -11,7 +11,7 @@ import lombok.Setter;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.github.sbonjour.my_cloud.service.FileType;
+import com.github.sbonjour.my_cloud.FileType;
 
 /**
  * Represents a media asset (photo or video) uploaded by a user.
@@ -60,7 +60,7 @@ public class MediaAsset {
     @Builder.Default
     private Instant takenAt = Instant.now();
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     @Builder.Default
     private Boolean takenAtKnown = false;
 

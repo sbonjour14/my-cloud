@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import com.github.sbonjour.my_cloud.service.FileType;
+import com.github.sbonjour.my_cloud.FileType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;

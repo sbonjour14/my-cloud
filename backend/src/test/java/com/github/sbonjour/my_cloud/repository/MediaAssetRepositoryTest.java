@@ -13,11 +13,11 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
+import com.github.sbonjour.my_cloud.FileType;
 import com.github.sbonjour.my_cloud.TestDataFactory;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
-import com.github.sbonjour.my_cloud.service.FileType;
 
 @DataJpaTest
 class MediaAssetRepositoryTest extends AbstractPostgresContainerTest {

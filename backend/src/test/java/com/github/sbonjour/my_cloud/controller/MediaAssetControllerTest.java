@@ -21,12 +21,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import jakarta.servlet.http.Cookie;
 
+import com.github.sbonjour.my_cloud.FileType;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
 import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.exception.ConflictException;
 import com.github.sbonjour.my_cloud.exception.InternalServerErrorException;
-import com.github.sbonjour.my_cloud.service.FileType;
 import com.github.sbonjour.my_cloud.service.MediaAssetService;
 
 @WebMvcTest(MediaAssetController.class)

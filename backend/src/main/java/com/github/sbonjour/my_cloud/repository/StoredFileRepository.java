@@ -1,7 +1,7 @@
 package com.github.sbonjour.my_cloud.repository;
 
+import com.github.sbonjour.my_cloud.FileType;
 import com.github.sbonjour.my_cloud.entity.StoredFile;
-import com.github.sbonjour.my_cloud.service.FileType;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
