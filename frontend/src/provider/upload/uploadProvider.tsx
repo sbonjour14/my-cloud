@@ -138,6 +138,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         },
         onSuccess: (_, file) => {
             queryClient.invalidateQueries({ queryKey: getFileType(file) === "IMAGE" ? mediaAssetsKeys.images : mediaAssetsKeys.videos});
+            queryClient.invalidateQueries({ queryKey: mediaAssetsKeys.all});
         },
     });
 
