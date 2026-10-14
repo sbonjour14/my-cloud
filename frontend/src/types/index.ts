@@ -53,3 +53,13 @@ export type UploadSessionResponse = {
   uploadedSize: number,
   uploadedRanges: ByteRange[]
 }
+
+
+export type ScrollParams = {
+  cursor?:string, 
+  order: "ASC" | "DESC",
+  size?:number, 
+  type?: FileType,
+}
+
+export type Scroll<T> = {items: T[], nextCursor: string | null}

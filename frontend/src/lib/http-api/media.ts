@@ -1,4 +1,4 @@
-import type { MediaAssetResponse } from "@/types";
+import type { ScrollParams, MediaAssetResponse, Scroll } from "@/types";
 import { api } from "../axios";
 
 
@@ -40,4 +40,12 @@ export async function deleteMediaAsset(id: string) : Promise<void> {
 export async function getCount() : Promise<number> {
 	const {data: response} = await api.get("/mediaAssets/count")
 	return response;
+}
+
+
+
+export async function getScroll(p: ScrollParams) : Promise<Scroll<MediaAssetResponse>> {
+	const {data} = await api.get<Scroll<MediaAssetResponse>>("/mediaAssetsList", {params: p});
+	return data;
+
 }
