@@ -139,7 +139,7 @@ code {
 :root {
   --background: #F8FAFD;
   --foreground: #1F1F1F;
-  --card: #F0F4F9;
+  --card: #e4f0fe;
   --card-foreground: #1F1F1F;
   --popover: #FFFFFF;
   --popover-foreground: #1F1F1F;
@@ -149,7 +149,7 @@ code {
   --secondary-foreground: #1F1F1F;
   --muted: #F0F4F9;
   --muted-foreground: #444746;
-  --accent: #E9EEF6;
+  --accent: #d7e6ff;
   --accent-foreground: #1F1F1F;
   --destructive: #B3261E;
   --border: #C4C7C5;
