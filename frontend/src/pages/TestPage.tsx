@@ -5,7 +5,7 @@ import { useMediaAssets, useMediaAssetsCount } from "@/hooks/mediaAsset";
 import { useUploadFile } from "@/hooks/useUploadFile";
 import { logoutUser } from "@/lib/http-api/auth";
 import { useCallback, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeftIcon, CloudIcon, Home } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { useStorageUsage } from "@/hooks/useStorageUsage";
@@ -20,7 +20,7 @@ export function TestPage() {
     const inputRef2 = useRef<HTMLInputElement>(null);
 
     const [page, setPage] = useState(0);
-    const pageSize = 5;
+    const pageSize = 8;
     const { upload: uploadFile, cancel, pause, resume, uploads } = useUpload();
 
     const onPause = useCallback((item: UploadSession) => { pause(item); }, [pause]);
@@ -51,8 +51,6 @@ export function TestPage() {
     return (
         <div className="w-full min-h-screen mt-5 flex flex-col gap-5 items-center">
             <div className="flex flex-row gap-2 items-center">
-                <Link to={"/register"}> go to register</Link>
-                <Link to={"/login"}> go to login</Link>
                 <input
                     ref={inputRef}
                     className="hidden"
@@ -65,6 +63,7 @@ export function TestPage() {
                 <input
                     ref={inputRef2}
                     className="hidden"
+                    multiple
                     type="file"
                     onChange={handleFileChange2}
                 />
@@ -77,9 +76,7 @@ export function TestPage() {
                 </Button>
             </div>
 
-            <div>user : {me?.displayName}</div>
-            <div>user id : {me?.id}</div>
-            <div>storage : {((storageUsed ?? 0) / 1000000).toFixed(2)}MB</div>
+            <div>user : {me?.displayName} storage : {((storageUsed ?? 0) / 1000000).toFixed(2)}MB</div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 {uploads.map((uploadItem: UploadSession) => (
@@ -117,33 +114,23 @@ export function TestPage() {
                     </EmptyContent>
                 </Empty>
             ) : (
-                <>
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-3">
-                        {mediaAssets.map((ma) => <MediaAssetCard key={ma.id} ma={ma} />)}
-                    </div>
-
-                    <div className="flex gap-2 items-center mt-5">
-                        <Button onClick={() => setPage(page - 1)} disabled={page <= 0}>
-                            <ArrowLeftIcon />
-                        </Button>
-                        <p>{page + 1}</p>
-                        <Button
-                            onClick={() => setPage(page + 1)}
-                            disabled={(page + 1) * pageSize >= (mediaAssetsCount ?? 0)}
-                        >
-                            <ArrowLeftIcon className="rotate-180" />
-                        </Button>
-                    </div>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => inputRef.current?.click()}
-                    >
-                        Upload more
-                    </Button>
-                </>
+                <div className="grid w-full max-w-6xl grid-cols-2 gap-3 px-4 md:grid-cols-4">
+                    {mediaAssets.map((ma) => <MediaAssetCard key={ma.id} ma={ma} />)}
+                </div>
             )}
+            <div className="flex gap-2 items-center mt-5">
+                <Button onClick={() => setPage(page - 1)} disabled={page <= 0}>
+                    <ArrowLeftIcon />
+                </Button>
+                <p>{page + 1}</p>
+                <Button
+                    onClick={() => setPage(page + 1)}
+                    disabled={(page + 1) * pageSize >= (mediaAssetsCount ?? 0)}
+                >
+                    <ArrowLeftIcon className="rotate-180" />
+                </Button>
+            </div>
+
         </div>
     );
 }
