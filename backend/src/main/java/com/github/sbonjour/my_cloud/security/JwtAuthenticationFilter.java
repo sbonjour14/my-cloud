@@ -28,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
     private static final String INTERNAL_PATH_PATTERN = "/media/*/thumbnail-ready";
 
     private String extractTokenFromCookie(HttpServletRequest request) {
@@ -47,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return pathMatcher.match(INTERNAL_PATH_PATTERN, request.getRequestURI());
+        return PATH_MATCHER.match(INTERNAL_PATH_PATTERN, request.getRequestURI());
     }
 
 

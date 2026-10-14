@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Window;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -184,20 +183,17 @@ public class MediaAssetController {
     }
 
     @GetMapping("/mediaAssetsList")
-    public ResponseEntity<List<MediaAssetResponse>> getMediaAssetsList(@AuthenticationPrincipal User user,
-            @RequestParam String cursor, @RequestParam(defaultValue = "100") int size,
+    public ResponseEntity<MediaAssetWindowResponse> getMediaAssetsList(@AuthenticationPrincipal User user,
+            @RequestParam(required = false) String cursor, @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "DESC") OrderValues order, @RequestParam (required = false) FileType type) {
         
-        MediaAssetWindow mediaAssets = mediaAssetService.getScroll(user, cursor, size, order.equals("ASC"), type);
+        MediaAssetWindow window = mediaAssetService.getScroll(user, cursor, size, order.equals(OrderValues.ASC), type);
 
-        List<MediaAssetResponse> response = mediaAssets.items().stream()
-                .map(MediaAssetResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(MediaAssetWindowResponse.from(window));
     }
 
     private record MediaAssetWindowResponse(List<MediaAssetResponse> items, String nextCursor) {
-        MediaAssetWindowResponse from(MediaAssetWindow window) {
+        public static MediaAssetWindowResponse from(MediaAssetWindow window) {
             return new MediaAssetWindowResponse(window.items().stream().map(MediaAssetResponse::fromEntity).toList(), window.nextCursor());
         }
     }
