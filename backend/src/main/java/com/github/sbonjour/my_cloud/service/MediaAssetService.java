@@ -15,8 +15,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.KeysetScrollPosition;
 import org.springframework.data.domain.Limit;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Window;
@@ -201,15 +199,6 @@ public class MediaAssetService {
         storedFileService.save(sf);
     }
 
-
-    public List<MediaAsset> getPaginated(User user, int page, int size, boolean asc, FileType type) {
-
-        Pageable pageable = PageRequest.of(page, size, asc ? Sort.by("createdAt").ascending() : Sort.by("takenAt", "id").descending());
-
-        if(type != null)
-            return mediaAssetRepository.findByOwnerAndFileType(user, type, pageable);
-        return mediaAssetRepository.findByOwner(user, pageable);
-    }
 
     public long countByOwner(User user) {
         return mediaAssetRepository.countByOwner(user);

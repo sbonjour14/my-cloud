@@ -29,12 +29,19 @@ export type UserResponse = {
   createdAt: string
 }
 
-export type MediaAssetResponse = {
+export type MediaAssetDetailResponse = {
   id: string,
   filename: string,
   url: string
   thumbnailUrl: string,
   createdAt: string,
+  takenAt: string,
+  hasThumbnail: boolean,
+  type: FileType
+}
+
+export type MediaAssetSummaryResponse = {
+  id: string,
   takenAt: string,
   hasThumbnail: boolean,
   type: FileType

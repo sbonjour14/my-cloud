@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import com.github.sbonjour.my_cloud.FileType;
 
-public record MediaAssetResponse(
+public record MediaAssetDetailResponse(
         UUID id,
         String filename,
         String url,
@@ -14,8 +14,8 @@ public record MediaAssetResponse(
         Instant takenAt,
         boolean hasThumbnail,
         FileType type) {
-    public static MediaAssetResponse fromEntity(com.github.sbonjour.my_cloud.entity.MediaAsset mediaAsset) {
-        return new MediaAssetResponse(
+    public static MediaAssetDetailResponse fromEntity(com.github.sbonjour.my_cloud.entity.MediaAsset mediaAsset) {
+        return new MediaAssetDetailResponse(
                 mediaAsset.getId(),
                 mediaAsset.getFilename(),
                 "/media/" + mediaAsset.getId(),
@@ -23,7 +23,7 @@ public record MediaAssetResponse(
                 mediaAsset.getCreatedAt(),
                 mediaAsset.getTakenAt(),
                 mediaAsset.getStoredFile().isHasThumbnail(),
-                mediaAsset.getStoredFile().getFileType()
+                mediaAsset.getFileType()
             );
     }
 

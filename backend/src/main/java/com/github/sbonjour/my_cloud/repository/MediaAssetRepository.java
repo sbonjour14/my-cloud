@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Limit;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.ScrollPosition;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Window;
@@ -21,10 +20,6 @@ import com.github.sbonjour.my_cloud.entity.User;
 
 public interface MediaAssetRepository extends JpaRepository<MediaAsset, UUID> {
     List<MediaAsset> findByOwner(User owner);
-
-    List<MediaAsset> findByOwner(User owner, Pageable pageable);
-
-    List<MediaAsset> findByOwnerAndFileType(User owner, FileType type, Pageable pageable);
 
     Optional<MediaAsset> findByOwnerAndFilenameIgnoringCase(User owner, String fileName);
 

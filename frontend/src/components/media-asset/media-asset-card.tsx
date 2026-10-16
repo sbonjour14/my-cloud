@@ -1,4 +1,4 @@
-import type { MediaAssetResponse } from "@/types";
+import type { MediaAssetSummaryResponse } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Image as ImageIcon, TrashIcon, Video } from "lucide-react";
 import { Button } from "../ui/button";
@@ -7,11 +7,15 @@ import axios from "axios";
 import type { BaseUIEvent } from "@base-ui/react/types";
 import { useState } from "react";
 
-export default function MediaAssetCard({ ma }: { ma: MediaAssetResponse }) {
+export default function MediaAssetCard({ ma }: { ma: MediaAssetSummaryResponse }) {
     const TypeIcon = ma.type === "VIDEO" ? Video : ImageIcon;
 
     const [isDisable, setIsDisable] = useState<boolean>(false);
     const { deleteAsset } = useDeleteMediaAsset();
+
+    const getThumbnailUrl = () => {
+        return import.meta.env.VITE_API_URL + '/media/' + ma.id + '/thumbnail';
+    }
 
     const handleClick = (event: BaseUIEvent<React.MouseEvent<HTMLButtonElement, MouseEvent>>) => {
         setIsDisable(true);
@@ -28,34 +32,11 @@ export default function MediaAssetCard({ ma }: { ma: MediaAssetResponse }) {
         }
     }
 
-
-
-    const takenDate = ma.takenAt
-        ? new Date(ma.takenAt).toLocaleDateString("en-EN", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-            timeZone: "UTC",
-        })
-        : null;
-
-
     return (
         <Card className="group w-full min-w-0 cursor-pointer gap-0 rounded-2xl border-0 bg-card p-2 shadow-none ring-0! transition-colors duration-200 hover:bg-accent sm:p-3">
             <CardContent className="flex flex-col gap-2 p-0 sm:gap-3">
                 <div className="flex h-14 items-start gap-2.5 px-1 py-1.5 sm:h-16 sm:py-2">
                     <TypeIcon className="size-5 shrink-0 text-destructive" />
-                    <div className="min-w-0 flex-1">
-                        <p
-                            className="line-clamp-2 break-all text-xs font-medium text-card-foreground sm:text-sm"
-                            title={ma.filename}
-                        >
-                            {ma.filename}
-                        </p>
-                        {takenDate && (
-                            <p className="text-xs text-muted-foreground">{takenDate}</p>
-                        )}
-                    </div>
                     <Button
                         variant="ghost"
                         size="icon"
@@ -70,8 +51,8 @@ export default function MediaAssetCard({ ma }: { ma: MediaAssetResponse }) {
                 <div className="aspect-video w-full overflow-hidden rounded-xl bg-background">
                     {ma.hasThumbnail ? (
                         <img
-                            src={import.meta.env.VITE_API_URL + ma.thumbnailUrl}
-                            alt={ma.filename}
+                            src={getThumbnailUrl()}
+                            alt={"image"}
                             loading="lazy"
                             className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />

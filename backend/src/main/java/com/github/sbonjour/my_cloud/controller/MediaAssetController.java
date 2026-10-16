@@ -20,7 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.github.sbonjour.my_cloud.FileType;
 import com.github.sbonjour.my_cloud.MediaAssetWindow;
-import com.github.sbonjour.my_cloud.dto.MediaAssetResponse;
+import com.github.sbonjour.my_cloud.dto.MediaAssetDetailResponse;
+import com.github.sbonjour.my_cloud.dto.MediaAssetSummaryResponse;
 import com.github.sbonjour.my_cloud.entity.MediaAsset;
 import com.github.sbonjour.my_cloud.entity.User;
 import com.github.sbonjour.my_cloud.service.MediaAssetService;
@@ -45,32 +46,9 @@ public class MediaAssetController {
      */
 
     @PostMapping("/mediaAssets")
-    public ResponseEntity<MediaAssetResponse> uploadMediaAsset(@RequestParam("file") MultipartFile file, @AuthenticationPrincipal User user) {
+    public ResponseEntity<MediaAssetDetailResponse> uploadMediaAsset(@RequestParam("file") MultipartFile file, @AuthenticationPrincipal User user) {
         MediaAsset mediaAsset = mediaAssetService.uploadFile(file, user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(MediaAssetResponse.fromEntity(mediaAsset));
-    }
-
-    /**
-     * Retrieves all media assets for the authenticated user.
-     *
-     * The response includes a list of public representations of the
-     * user's media assets.
-     *
-     * @param user the authenticated user (injected by Spring Security)
-     * @return 200 OK with a list of MediaAssetResponse
-     */
-
-    @GetMapping("/mediaAssets")
-    public ResponseEntity<List<MediaAssetResponse>> getMediaAssets(@AuthenticationPrincipal User user,
-            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "DESC") OrderValues order, @RequestParam (required = false) FileType type) {
-        
-        List<MediaAsset> mediaAssets = mediaAssetService.getPaginated(user, page, size, order.equals(OrderValues.ASC), type);
-
-        List<MediaAssetResponse> response = mediaAssets.stream()
-                .map(MediaAssetResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(MediaAssetDetailResponse.fromEntity(mediaAsset));
     }
 
     @GetMapping("mediaAssets/count")
@@ -130,10 +108,10 @@ public class MediaAssetController {
      * @return 200 OK with MediaAssetResponse, or 404 if not found
      */
     @GetMapping("/mediaAssets/{id}")
-    public ResponseEntity<MediaAssetResponse> getMediaAssetInfo(@PathVariable("id") UUID id,
+    public ResponseEntity<MediaAssetDetailResponse> getMediaAssetInfo(@PathVariable("id") UUID id,
             @AuthenticationPrincipal User user) {
         MediaAsset mediaAsset = mediaAssetService.getMediaAsset(id, user);
-        return ResponseEntity.ok(MediaAssetResponse.fromEntity(mediaAsset));
+        return ResponseEntity.ok(MediaAssetDetailResponse.fromEntity(mediaAsset));
     }
 
     /**
@@ -165,9 +143,9 @@ public class MediaAssetController {
      * @return 200 OK with the updated MediaAssetResponse, or 404 if not found
      */
     @PatchMapping("/mediaAssets/{id}")
-    public ResponseEntity<MediaAssetResponse> updateMediaAsset(@PathVariable("id") UUID id, @RequestParam("name") String name, @AuthenticationPrincipal User user) {
+    public ResponseEntity<MediaAssetDetailResponse> updateMediaAsset(@PathVariable("id") UUID id, @RequestParam("name") String name, @AuthenticationPrincipal User user) {
         MediaAsset mediaAsset = mediaAssetService.updateMediaAsset(id, name, user);
-        return ResponseEntity.ok(MediaAssetResponse.fromEntity(mediaAsset));
+        return ResponseEntity.ok(MediaAssetDetailResponse.fromEntity(mediaAsset));
     }
 
     /**
@@ -192,9 +170,9 @@ public class MediaAssetController {
         return ResponseEntity.ok(MediaAssetWindowResponse.from(window));
     }
 
-    private record MediaAssetWindowResponse(List<MediaAssetResponse> items, String nextCursor) {
+    private record MediaAssetWindowResponse(List<MediaAssetSummaryResponse> items, String nextCursor) {
         public static MediaAssetWindowResponse from(MediaAssetWindow window) {
-            return new MediaAssetWindowResponse(window.items().stream().map(MediaAssetResponse::fromEntity).toList(), window.nextCursor());
+            return new MediaAssetWindowResponse(window.items().stream().map(MediaAssetSummaryResponse::fromEntity).toList(), window.nextCursor());
         }
     }
 
