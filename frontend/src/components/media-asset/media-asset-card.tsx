@@ -33,9 +33,11 @@ export default function MediaAssetCard({ ma }: { ma: MediaAssetSummaryResponse }
     }
 
     return (
-        <Card className="group w-full min-w-0 cursor-pointer gap-0 rounded-2xl border-0 bg-card p-2 shadow-none ring-0! transition-colors duration-200 hover:bg-accent sm:p-3">
-            <CardContent className="flex flex-col gap-2 p-0 sm:gap-3">
-                <div className="flex h-14 items-start gap-2.5 px-1 py-1.5 sm:h-16 sm:py-2">
+        <Card className="group w-full min-w-0 cursor-pointer gap-0 p-0! rounded-none" >
+            <CardContent className="p-0! ring-0! border-0!">
+
+                <div className="aspect-square w-full overflow-hidden bg-background relative">
+                <div className="flex items-start gap-2.5 px-1 py-1.5 sm:h-16 sm:py-2 bg-transparent absolute top-0 left-0 z-30">
                     <TypeIcon className="size-5 shrink-0 text-destructive" />
                     <Button
                         variant="ghost"
@@ -47,8 +49,6 @@ export default function MediaAssetCard({ ma }: { ma: MediaAssetSummaryResponse }
                         <TrashIcon className="size-4" />
                     </Button>
                 </div>
-
-                <div className="aspect-video w-full overflow-hidden rounded-xl bg-background">
                     {ma.hasThumbnail ? (
                         <img
                             src={getThumbnailUrl()}

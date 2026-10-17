@@ -21,7 +21,7 @@ export default function MediaAssetScroll() {
         }, {rootMargin: "300px"});
         observer.observe(sentinel);
         return () => observer.disconnect();
-    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+    }, [hasNextPage, isFetchingNextPage ]);
     return (<>
         {status === "pending"
             ? (<Spinner></Spinner>)
